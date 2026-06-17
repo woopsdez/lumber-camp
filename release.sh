@@ -6,7 +6,7 @@ VERSION=${1:?使い方: ./release.sh vNN}
 ITCH_USER="migy-craft"
 ITCH_GAME="ano-lumber-camp"
 ITCH_CHANNEL="html"
-HTML_FILE="lumber-camp.html"
+HTML_FILE="index.html"
 BUTLER="${HOME}/.local/bin/butler"
 
 echo "=== リリース: ${VERSION} ==="
@@ -32,12 +32,9 @@ gh release create ${VERSION} ${HTML_FILE} \
   --title "${VERSION}" \
   --notes "${NOTES}"
 
-# itch.io へアップロード（index.html として送らないと "Failed to find index.html" になる）
+# itch.io へアップロード
 echo "--- itch.io へアップロード中 ---"
-TMPDIR=$(mktemp -d)
-cp ${HTML_FILE} ${TMPDIR}/index.html
-${BUTLER} push ${TMPDIR} ${ITCH_USER}/${ITCH_GAME}:${ITCH_CHANNEL} --userversion ${VERSION}
-rm -rf ${TMPDIR}
+${BUTLER} push ${HTML_FILE} ${ITCH_USER}/${ITCH_GAME}:${ITCH_CHANNEL} --userversion ${VERSION}
 
 echo ""
 echo "✅ 完了!"
