@@ -20,5 +20,5 @@
 ## [v25] - (last public build)
 itchで公開していたベースライン。
 
-[v36]: https://github.com/USER/REPO/releases/tag/v36
-[v25]: https://github.com/USER/REPO/releases/tag/v25
+[v36]: https://github.com/woopsdez/lumber-camp/releases/tag/v36
+[v25]: https://github.com/woopsdez/lumber-camp/releases/tag/v25
