@@ -32,9 +32,12 @@ gh release create ${VERSION} ${HTML_FILE} \
   --title "${VERSION}" \
   --notes "${NOTES}"
 
-# itch.io へアップロード
+# itch.io へアップロード（index.html として送らないと "Failed to find index.html" になる）
 echo "--- itch.io へアップロード中 ---"
-${BUTLER} push ${HTML_FILE} ${ITCH_USER}/${ITCH_GAME}:${ITCH_CHANNEL} --userversion ${VERSION}
+TMPDIR=$(mktemp -d)
+cp ${HTML_FILE} ${TMPDIR}/index.html
+${BUTLER} push ${TMPDIR} ${ITCH_USER}/${ITCH_GAME}:${ITCH_CHANNEL} --userversion ${VERSION}
+rm -rf ${TMPDIR}
 
 echo ""
 echo "✅ 完了!"
