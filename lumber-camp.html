@@ -1,0 +1,2760 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>きこりキャンプ v36</title>
+<style>
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#5e9a4c;font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;touch-action:none;-webkit-user-select:none;user-select:none;}
+  #game{display:block;width:100%;height:100%;}
+  .modalBg{position:fixed;inset:0;background:rgba(20,40,25,.8);display:none;align-items:center;justify-content:center;z-index:20;}
+  .card{background:#fdf6e3;border-radius:24px;padding:26px 30px;max-width:440px;width:88%;text-align:center;box-shadow:0 16px 50px rgba(0,0,0,.4);position:relative;max-height:86vh;overflow:auto;}
+  .card h1{margin:0 0 6px;font-size:26px;color:#5a3d1e;letter-spacing:.05em;}
+  .card p{margin:8px 0;color:#6b5436;font-size:14px;line-height:1.8;}
+  .card .ops{background:#f0e6cc;border-radius:12px;padding:10px;font-size:13px;}
+  .xBtn{position:absolute;top:10px;right:12px;width:36px;height:36px;border:none;border-radius:50%;background:#d9cdaa;color:#5a3d1e;font-size:18px;font-weight:800;cursor:pointer;}
+  #startBtn{margin-top:16px;background:#4caf50;color:#fff;border:none;border-radius:999px;padding:14px 46px;font-size:18px;font-weight:700;cursor:pointer;box-shadow:0 5px 0 #357a38;}
+  #startBtn:active{transform:translateY(3px);box-shadow:0 2px 0 #357a38;}
+  .stats{background:#f0e6cc;border-radius:12px;padding:10px;font-size:14px;margin:10px 0;line-height:1.9;}
+  #nameEntry{display:flex;gap:8px;justify-content:center;margin:8px 0;}
+  #nameInput{width:11ch;font-family:ui-monospace,Menlo,monospace;font-size:20px;letter-spacing:2px;text-align:center;text-transform:uppercase;border:3px solid #8a6d3b;border-radius:10px;padding:8px 4px;background:#fffdf4;color:#5a3d1e;}
+  #nameBtn{border:none;border-radius:10px;background:#4caf50;color:#fff;font-weight:800;padding:0 16px;cursor:pointer;box-shadow:0 3px 0 #357a38;}
+  #board{font-family:ui-monospace,Menlo,monospace;background:#2c3a2c;color:#e8f4d8;border-radius:12px;padding:10px 14px;font-size:14px;line-height:1.85;text-align:left;max-height:200px;overflow:auto;margin:8px 0;}
+  #board .me{color:#ffe66b;font-weight:800;}
+  #board .bTitle{text-align:center;color:#ffd27f;font-weight:800;letter-spacing:3px;}
+  .ctaBtn{display:block;width:100%;box-sizing:border-box;margin-top:10px;border:none;border-radius:999px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;color:#fff;background:#4a7fd4;box-shadow:0 4px 0 #2f5a9e;}
+  .xLink{display:block;margin-top:10px;font-size:13px;color:#6b5436;}
+  #tabbar{position:fixed;left:0;right:0;bottom:0;z-index:14;display:none;gap:6px;background:rgba(24,38,24,.94);border-top:2px solid rgba(255,255,255,.14);padding:7px 10px calc(7px + env(safe-area-inset-bottom));}
+  .tab{flex:1;border:none;background:transparent;color:#fffbe8;font-weight:800;font-size:15px;padding:12px 0;border-radius:12px;cursor:pointer;}
+  .tab:active,.tab.on{background:#4caf50;}
+  .setBtn{border:none;border-radius:10px;background:#4caf50;color:#fff;font-weight:800;padding:10px 18px;cursor:pointer;box-shadow:0 3px 0 #357a38;font-size:14px;}
+  .setBtn.dim{background:#9aa28f;box-shadow:0 3px 0 #6e755f;}
+  #reopenClear{position:fixed;right:14px;bottom:86px;z-index:15;display:none;background:#e0762f;color:#fff;border:none;border-radius:999px;padding:10px 16px;font-weight:700;font-size:14px;box-shadow:0 3px 0 #a8541d;cursor:pointer;}
+  /* 研究ツリー */
+  .rNode{display:flex;align-items:center;gap:10px;text-align:left;background:#f0e6cc;border:3px solid #c9b88f;border-radius:14px;padding:10px 12px;margin:8px 0;cursor:pointer;}
+  .rNode.locked{opacity:.45;cursor:default;}
+  .rNode.done{background:#dcedc8;border-color:#7cb342;cursor:default;}
+  .rNode.cur{background:#fff3cd;border-color:#e0a700;}
+  .rNode .ic{font-size:24px;}
+  .rNode .nm{font-weight:800;color:#5a3d1e;font-size:15px;}
+  .rNode .ds{font-size:12px;color:#6b5436;}
+  .rNode .ct{margin-left:auto;font-weight:800;color:#2e7d32;white-space:nowrap;font-size:14px;}
+  .rBar{height:8px;background:#d9cdaa;border-radius:4px;overflow:hidden;margin-top:5px;}
+  .rBar>div{height:100%;background:#e0a700;}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div class="modalBg" id="clear">
+  <div class="card">
+    <button class="xBtn" id="clearX">✕</button>
+    <h1>🎉 全アンロック達成!</h1>
+    <div class="stats" id="clearStats"></div>
+    <div id="nameEntry">
+      <input id="nameInput" maxlength="8" placeholder="NAME?" autocomplete="off">
+      <button id="nameBtn">登録</button>
+    </div>
+    <div id="board"></div>
+    <a class="ctaBtn" id="ctaMail" href="#" target="_blank" rel="noopener">📮 更新のお知らせメールを受け取る</a>
+    <a class="xLink" id="ctaX" href="#" target="_blank" rel="noopener">お問い合わせ: X(Twitter)</a>
+  </div>
+</div>
+<button id="reopenClear">🎉</button>
+<button id="dbgToggle" style="display:none;position:fixed;left:10px;top:10px;z-index:30;background:#333;color:#fff;border:none;border-radius:8px;padding:8px 12px;font-weight:800;cursor:pointer;">🐞</button>
+<div id="dbgPanel" style="display:none;position:fixed;left:10px;top:52px;z-index:30;background:rgba(20,24,20,.92);border-radius:12px;padding:10px;width:230px;font-size:12px;color:#cfe;max-height:84vh;overflow:auto;">
+  <div id="dbgStats" style="font-family:ui-monospace,Menlo,monospace;line-height:1.6;margin-bottom:8px;color:#9f9;white-space:pre-line;"></div>
+  <div class="dbgRow"><b>💰 お金</b></div>
+  <button class="dbgBtn" data-act="money1">+$1,000</button>
+  <button class="dbgBtn" data-act="money2">+$10,000</button>
+  <div class="dbgRow"><b>⏩ ゲーム速度</b></div>
+  <button class="dbgBtn" data-act="spd1">x1</button>
+  <button class="dbgBtn" data-act="spd2">x2</button>
+  <button class="dbgBtn" data-act="spd4">x4</button>
+  <div class="dbgRow"><b>🚀 フェーズスキップ</b></div>
+  <button class="dbgBtn" data-act="forest">森を制覇</button>
+  <button class="dbgBtn" data-act="river">川を制覇</button>
+  <button class="dbgBtn" data-act="hqn">本社(北)</button>
+  <button class="dbgBtn" data-act="hqw">本社(西)</button>
+  <button class="dbgBtn" data-act="hqs">本社(南)</button>
+  <div class="dbgRow"><b>🐻 クマ</b></div>
+  <button class="dbgBtn" data-act="rush">ラッシュ召喚</button>
+  <button class="dbgBtn" data-act="boss">デカグマ召喚</button>
+  <button class="dbgBtn" data-act="clearBears">全消去</button>
+  <div class="dbgRow"><b>🎥 カメラ</b></div>
+  <button class="dbgBtn" data-act="camover">全体像→復帰</button>
+  <button class="dbgBtn" data-act="camriver">川マップをリビール</button>
+  <div class="dbgRow"><b>🛠 その他</b></div>
+  <button class="dbgBtn" data-act="projDone">進行中の計画を即完了</button>
+  <button class="dbgBtn" data-act="clearScreen">クリア画面を表示</button>
+  <button class="dbgBtn" data-act="resetTime">タイムを0に</button>
+</div>
+<style>
+.dbgRow{margin:8px 0 3px;color:#ffd27f;}
+.dbgBtn{background:#2e7d32;color:#fff;border:none;border-radius:7px;padding:6px 9px;margin:2px 2px;font-size:12px;font-weight:700;cursor:pointer;}
+.dbgBtn:active{background:#1b5e20;}
+</style>
+<div id="tabbar">
+  <button class="tab" id="tabResearch" style="display:none;">🔬 研究</button>
+  <button class="tab" id="tabHQ"></button>
+  <button class="tab" id="tabLocked" style="opacity:.45;">🔒</button>
+  <button class="tab" id="tabSettings"></button>
+</div>
+
+<div class="modalBg" id="hqm">
+  <div class="card">
+    <button class="xBtn" id="hqmX">✕</button>
+    <h1 id="hqmT"></h1>
+    <p id="hqmD" style="font-size:13px;"></p>
+    <div id="pjList"></div>
+  </div>
+</div>
+<div class="modalBg" id="settings">
+  <div class="card">
+    <button class="xBtn" id="setX">✕</button>
+    <h1 id="setT"></h1>
+    <div class="stats" style="text-align:left;">
+      <div id="setLangLabel" style="font-weight:800;color:#5a3d1e;"></div>
+      <div style="display:flex;gap:8px;margin:6px 0 14px;">
+        <button class="setBtn" id="setJa">🇯🇵 日本語</button>
+        <button class="setBtn" id="setEn">🇬🇧 English</button>
+      </div>
+      <div id="setSoundLabel" style="font-weight:800;color:#5a3d1e;"></div>
+      <div style="display:flex;gap:8px;margin:6px 0 14px;">
+        <button class="setBtn" id="setSnd"></button>
+      </div>
+      <button class="setBtn" id="setReset" style="background:#c0564a;box-shadow:0 3px 0 #8a3d34;"></button>
+    </div>
+    <div id="setVer" style="font-size:12px;color:#8a6d3b;"></div>
+    <a class="xLink" id="setX2" href="#" target="_blank" rel="noopener"></a>
+  </div>
+</div>
+<div class="modalBg" id="lab">
+  <div class="card">
+    <button class="xBtn" id="labX">✕</button>
+    <h1>🔬 研究所</h1>
+    <p style="font-size:13px;">商品を売ると研究ポイントが貯まる。<br>🪵木材 / 🍗肉料理 / 🍢魚料理、それぞれの売上が対応ツリーの研究に!</p>
+    <div class="stats" id="rPts"></div>
+    <div id="rList"></div>
+  </div>
+</div>
+
+<div class="modalBg" id="intro" style="display:flex;">
+  <div class="card">
+    <h1>🪓 きこりキャンプ <span style="font-size:14px;">Lumber Camp</span></h1>
+    <p>切る、売る、雇う、拓く。クマ? 今日も大漁です。<br><span style="opacity:.75;">Chop, sell, hire, expand. Bears? Today's catch.</span></p>
+    <div class="ops">PC: WASD / 矢印キー or ドラッグ Drag<br>スマホ Mobile: ドラッグで移動 Drag to move<br>作業は近づくだけで自動! Everything is automatic—just walk up!</div>
+    <button id="startBtn">🇯🇵 日本語ではじめる</button>
+    <button id="startBtnEn" style="margin-top:10px;background:#4a7fd4;box-shadow:0 5px 0 #2f5a9e;color:#fff;border:none;border-radius:999px;padding:14px 46px;font-size:18px;font-weight:700;cursor:pointer;">🇬🇧 Start in English</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ===== 言語 ===== */
+let LANG='ja';
+function LB(o){ return (o&&typeof o==='object')?(o[LANG]||o.ja):o; }
+const I18N={
+ja:{
+  h_chop:'🪓 まわりの木を切ろう! 近づくだけでOK',
+  h_sell:'🪵 カウンターに置いて、そのまま近くに立つと売れる!',
+  h_clerkneed:'🧑 売り子を雇うまでは、カウンターの近くに立たないと売れないよ',
+  h_pile:'💵 売り場の下の札束に触れて回収!',
+  h_raw:'🍖 生肉は🍳調理場を建てると焼いて売れるよ!',
+  h_fish:'🐟 生魚は川辺の魚焼き台へ! 焼くと$',
+  h_river:'🌊 東の果てに川がある…「川エリアを開拓」!',
+  h_research:'🔬 研究ポイントが貯まった! 下の研究タブを開こう',
+  h_unlock:'✨ 「{0}」がアンロックできるよ!',
+  h_boss:'👑 デカグマ出現! タレットじゃ手こずる…自分の斧なら4発!',
+  h_bears:'🐻 クマだらけだ。狩り放題!',
+  fl_rush:'🐻 クマの群れだ!',
+  fl_boss:'👑 デカグマだ!!',
+  fl_river:'🌊 川エリア開拓!',
+  fl_rdone:'🔬 研究完了!',
+  fl_labtab:'🔬 下の研究タブが使えるようになった!',
+  staff:'店番が必要!',
+  lab_t:'🔬 研究所',
+  lab_d:'商品を売ると研究ポイントが貯まる。<br>🪵木材 / 🍗肉料理 / 🍢魚料理、それぞれの売上が対応ツリーの研究に!',
+  need:'要: ',
+  tab_r:'🔬 研究',
+  clear_t:'🏆 クリア!!',
+  c_time:'クリアタイム',
+  c_total:'通算獲得',
+  c_res:'研究',
+  cta_mail:'📮 更新のお知らせメールを受け取る',
+  cta_x:'お問い合わせ: X(Twitter)',
+  lab_label:'研究所',
+  cer_forest:'🌲 森を制覇! 東に川への道が開けた!',
+  cer_river:'🌊 川を制覇! 本社を設立しよう!',
+  cer_hq:'🏢 本社設立!!',
+  h_hq:'🏢 本社を建てる場所を選ぼう(北/西/南のどれか1つ)',
+  hq_label:'本社',
+  tab_hq:'🏢 本社',
+  tab_set:'⚙ 設定',
+  lock_toast:'？？？(アップデートでかいほう)',
+  set_t:'⚙ 設定',
+  set_lang:'ことば / Language',
+  set_sound:'サウンド',
+  set_on:'ON', set_off:'OFF',
+  set_reset:'さいしょからやり直す',
+  set_reset_confirm:'ほんとうに最初から? いまの進行は消えるよ',
+  set_ver:'バージョン',
+  hqm_t:'🏢 本社の計画',
+  hqm_d:'どの計画からはじめる? 進行中にできる計画は1つだけ。',
+  pj_logi_n:'🚚 はこぶ力アップ', pj_logi_d:'トロッコ全部: 積める数+4・スピード+30%',
+  pj_menu_n:'🍱 新メニューづくり', pj_menu_d:'肉料理を150皿売って開発! 完成すると肉料理が$15→$24に',
+  pj_menu_p:'開発中… あと{0}皿',
+  pj_exp_n:'🗺 新しい土地をさがす', pj_exp_d:'探検隊を送る(90秒で帰ってくる)',
+  pj_exp_p:'探検中… {0}%',
+  pj_mys_n:'🔮 ふしぎ資源のけんきゅう', pj_mys_d:'探検で見つけた鉱石のかけらを調べる。全売値+10%',
+  pj_mys_req:'(さきに「新しい土地をさがす」!)',
+  pj_done:'✅ 完了',
+  pj_doing:'進行中…',
+  fl_logi:'🚚 はこぶ力アップ!',
+  fl_menu:'🍱 新メニュー「肉定食」完成! $24に!',
+  cer_mtn:'⛰ 山を発見!! (次のアップデートで開拓できる)',
+  fl_mys:'🔮 ふしぎ鉱石を解析! 全売値+10%',
+  hq_board:['📋 本社の計画ボード:','・はこぶ力アップ','・新メニューづくり','・新しい土地をさがす','・ふしぎ資源のけんきゅう'],
+},
+en:{
+  h_chop:'🪓 Chop nearby trees! Just walk up to them',
+  h_sell:'🪵 Drop logs at the counter and stand close to sell!',
+  h_clerkneed:'🧑 Until you hire a clerk, stand near the counter to sell',
+  h_pile:'💵 Touch the cash pile under the counter to collect!',
+  h_raw:'🍖 Build the 🍳 Grill to cook and sell raw meat!',
+  h_fish:'🐟 Take raw fish to the riverside smoker! Smoked sells for $',
+  h_river:'🌊 There is a river to the east… unlock "Expand to River"!',
+  h_research:'🔬 Research points ready! Open the Research tab below',
+  h_unlock:'✨ You can unlock "{0}"!',
+  h_boss:'👑 Big Bear! Turrets struggle… your axe kills it in 4 hits!',
+  h_bears:'🐻 Bears everywhere. Happy hunting!',
+  fl_rush:'🐻 Bear swarm!',
+  fl_boss:'👑 BIG BEAR!!',
+  fl_river:'🌊 River unlocked!',
+  fl_rdone:'🔬 Research done!',
+  fl_labtab:'🔬 Research tab is now available below!',
+  staff:'Needs a clerk!',
+  lab_t:'🔬 Laboratory',
+  lab_d:'Selling goods earns research points.<br>🪵 wood / 🍗 meat / 🍢 fish sales feed their own tree!',
+  need:'Req: ',
+  tab_r:'🔬 Research',
+  clear_t:'🏆 CLEAR!!',
+  c_time:'Clear time',
+  c_total:'Total earned',
+  c_res:'Research',
+  cta_mail:'📮 Get update emails',
+  cta_x:'Contact: X (Twitter)',
+  lab_label:'Lab',
+  cer_forest:'🌲 Forest mastered! The path east to the river is open!',
+  cer_river:'🌊 River mastered! Time to build your HQ!',
+  cer_hq:'🏢 HQ Established!!',
+  h_hq:'🏢 Choose where to build your HQ (N / W / S — pick one)',
+  hq_label:'HQ',
+  tab_hq:'🏢 HQ',
+  tab_set:'⚙ Settings',
+  lock_toast:'??? (unlocks in a future update)',
+  set_t:'⚙ Settings',
+  set_lang:'Language / ことば',
+  set_sound:'Sound',
+  set_on:'ON', set_off:'OFF',
+  set_reset:'Restart from beginning',
+  set_reset_confirm:'Really restart? Current progress will be lost',
+  set_ver:'Version',
+  hqm_t:'🏢 HQ Plans',
+  hqm_d:'Which plan first? Only one plan can run at a time.',
+  pj_logi_n:'🚚 Carry Power Up', pj_logi_d:'All minecarts: capacity +4, speed +30%',
+  pj_menu_n:'🍱 New Menu Dev', pj_menu_d:'Sell 150 meat dishes to develop! Meat $15 → $24',
+  pj_menu_p:'Developing… {0} dishes left',
+  pj_exp_n:'🗺 Explore New Lands', pj_exp_d:'Send an expedition (returns in 90s)',
+  pj_exp_p:'Exploring… {0}%',
+  pj_mys_n:'🔮 Mystery Resource Study', pj_mys_d:'Study the ore shard from the expedition. All prices +10%',
+  pj_mys_req:'(Explore New Lands first!)',
+  pj_done:'✅ Done',
+  pj_doing:'In progress…',
+  fl_logi:'🚚 Carry Power Up!',
+  fl_menu:'🍱 New menu complete! Meat dishes now $24!',
+  cer_mtn:'⛰ Mountain discovered!! (open in next update)',
+  fl_mys:'🔮 Ore analyzed! All prices +10%',
+  hq_board:['📋 HQ Plan Board:','- Carry Power Up','- New Menu Dev','- Explore New Lands','- Mystery Resource Study'],
+}};
+function T(){ return I18N[LANG]; }
+/* ===== 公開設定 ===== */
+const NOTIFY_URL='https://forms.gle/REPLACE_ME';
+const X_URL='https://x.com/REPLACE_ME';
+/* =================== */
+
+/* ================= セットアップ ================= */
+const canvas=document.getElementById('game');
+const ctx=canvas.getContext('2d');
+let vw=0,vh=0,dpr=1;
+function resize(){
+  dpr=Math.min(window.devicePixelRatio||1,2);
+  vw=window.innerWidth; vh=window.innerHeight;
+  canvas.width=vw*dpr; canvas.height=vh*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize',resize); resize();
+
+let W=1240,H=1000,CX=600,CY=500,ROAD_X=620,ROAD_F=1560,RIVER_X=1830;
+const W2=1980,Z_BASE=1.3;
+let Z=Z_BASE;
+const VERSION='v36';
+document.title='きこりキャンプ '+VERSION;
+
+/* ================= サウンド ================= */
+let MUTED=false;
+try{ MUTED=localStorage.getItem('lc_mute')==='1'; }catch(e){}
+let actx=null;
+function audio(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } return actx; }
+function beep(freq,dur,type,vol,slide){
+  if(MUTED) return;
+  const a=audio(); if(!a) return;
+  try{
+    const o=a.createOscillator(),g=a.createGain();
+    o.type=type||'square'; o.frequency.value=freq;
+    if(slide) o.frequency.exponentialRampToValueAtTime(slide,a.currentTime+dur);
+    g.gain.value=vol||0.05;
+    g.gain.exponentialRampToValueAtTime(0.0001,a.currentTime+dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime+dur);
+  }catch(e){}
+}
+const snd={
+  chop:()=>beep(150,.07,'square',.05,90),
+  coin:()=>beep(880,.07,'square',.035,1320),
+  cash:()=>beep(660,.05,'triangle',.035,990),
+  hit:()=>beep(200,.1,'sawtooth',.05,80),
+  drop:()=>beep(330,.08,'triangle',.05),
+  unlock:()=>{beep(523,.1,'square',.05);setTimeout(()=>beep(659,.1,'square',.05),90);setTimeout(()=>beep(784,.16,'square',.06),180);},
+  pick:()=>beep(520,.04,'triangle',.03,700),
+  splash:()=>beep(820,.09,'sine',.05,1500),
+  shot:()=>beep(980,.05,'square',.035,600),
+  research:()=>{beep(440,.12,'sine',.05);setTimeout(()=>beep(880,.2,'sine',.05),120);},
+};
+
+/* ================= データ定義層 ================= */
+const MAT={
+  log:   { e:'🪵', price:3,  draw:'log' },
+  raw:   { e:'🍖', price:0 },
+  cooked:{ e:'🍗', price:15 },
+  fish:  { e:'🐟', price:0 },
+  gfish: { e:'🍢', price:40 },
+};
+const TYPES=Object.keys(MAT);
+
+const state={
+  money:15, speed:430,
+  chopInt:0.07, chopRange:160, pickRange:160, fishInt:0.12,
+  instaFell:false, aoeFell:false,
+  unlocked:{}, territoryR:170,
+  priceMul:1, wantBonus:0, dropBonus:0, cartCapBonus:0, fishMul:1, cookMul:1,
+  time:0, soldOnce:false, started:false, totalEarned:0,
+};
+function priceOf(t){ return Math.round((MAT[t].price||0)*state.priceMul); }
+function mkInv(){ const o={}; for(const t of TYPES) o[t]=0; return o; }
+
+const player={x:CX,y:CY+40,dx:0,dy:1,inv:mkInv(),swing:0,chopT:0,fishT:0,actT:0,walk:0,atkT:0};
+
+/* --- カウンター(売り場): roadXごとに専用の客道を持つ --- */
+const counters=[
+  { type:'log',    x:540, y:350, roadX:ROAD_X, stock:0, unlocked:true,  staffed:false, queue:[], pile:0, pileX:540, pileY:462, tile:'forest' },
+  { type:'cooked', x:700, y:350, roadX:ROAD_X, stock:0, unlocked:false, staffed:false, queue:[], pile:0, pileX:700, pileY:462, tile:'forest' },
+  { type:'gfish',  x:1500,y:330, roadX:ROAD_F, stock:0, unlocked:false, staffed:false, queue:[], pile:0, pileX:1500,pileY:442, tile:'river' },
+];
+
+/* --- 置き場(Storage統一仕様): pickup=触れたら全量受け取り --- */
+const stores=[
+  { id:'st_plot',     type:'log',   x:295, y:752, amount:0, cap:60,       key:'lumber1' },
+  { id:'st_grill_out',type:'cooked',x:640, y:622, amount:0, cap:Infinity, key:'grill',  cartBlock:'cart_meat' },
+  { id:'st_smoke_out',type:'gfish', x:1565,y:545, amount:0, cap:Infinity, key:'exp_river', cartBlock:'cart_fish' },
+  { id:'st_plotF',    type:'fish',  x:1600,y:680, amount:0, cap:60,       key:'fisher' },
+];
+function Sfind(id){ return stores.find(s=>s.id===id); }
+
+/* --- 加工機: 入力素材を時間で出力置き場へ --- */
+const processors=[
+  { id:'grill',  x:700, y:560, inType:'raw',  outId:'st_grill_out', amount:0, t:0, key:'grill',  fx:'fire',  staffX:-58 },
+  { id:'smoker', x:1640,y:470, inType:'fish', outId:'st_smoke_out', amount:0, t:0, key:'exp_river', fx:'smoke', staffX:-58 },
+];
+function cookInt(){ return (state.unlocked.mill?0.135:0.18)*state.cookMul; }
+
+/* --- 採取ノード: 木と魚を同一システムで --- */
+const nodes=[];
+function addNode(x,y,kind,owner){
+  const def=kind==='tree'?{hp:4,regrow:4,yield:'log'}:{hp:3,regrow:2.5,yield:'fish'};
+  nodes.push({x,y,kind,owner,hp:def.hp,maxHp:def.hp,regrowMax:owner==='plot'?2.2:def.regrow,regrowT:0,yield:def.yield,shake:0,grow:1,ph:Math.random()*6,dead:false});
+}
+
+/* --- 採取ワーカー: 専属ノード群→置き場に積むだけ --- */
+const workers=[
+  { id:'wk_plot', owner:'plot',  outId:'st_plot',  interval:0.25, carryMax:4, key:'lumber1',
+    x:300,y:850, inv:mkInv(), walk:0,dx:1,dy:0,swing:0,timer:0,target:null, color:'#e07a5f' },
+  { id:'wk_fish', owner:'plotF', outId:'st_plotF', interval:0.27, carryMax:4, key:'fisher',
+    x:1600,y:740, inv:mkInv(), walk:0,dx:1,dy:0,swing:0,timer:0,target:null, color:'#4a90c2' },
+];
+
+/* --- 採取場(視覚パッチ) --- */
+const patches=[
+  { x:380, y:700,  rx:125,ry:82,  label:{ja:'🌲植林場',en:'🌲Tree Farm'}, key:'lumber1' },
+  { x:1600,y:710,  rx:100,ry:72,  label:{ja:'🎣漁場',en:'🎣Fishing'}, key:'fisher' },
+];
+
+/* --- トロッコ&荷馬車 --- */
+const carts=[
+  { id:'cart_wood', kind:'goods', srcId:'st_plot',     dstType:'log',   path:[{x:295,y:732},{x:380,y:430},{x:470,y:402}], cap:8, speed:230, load:0,seg:0,t:0,dir:1,waitT:0, key:'cartwood' },
+  { id:'cart_meat', kind:'goods', srcId:'st_grill_out',dstType:'cooked',path:[{x:745,y:548},{x:745,y:396}],               cap:6, speed:200, load:0,seg:0,t:0,dir:1,waitT:0, key:'cartmeat' },
+  { id:'cart_fish', kind:'goods', srcId:'st_smoke_out',dstType:'gfish', path:[{x:1565,y:520},{x:1500,y:430}],             cap:6, speed:200, load:0,seg:0,t:0,dir:1,waitT:0, key:'cartF' },
+  { id:'cart_feed', kind:'feed',  srcId:'st_plotF',    dstProc:'smoker', path:[{x:1600,y:652},{x:1648,y:540}], cap:6, speed:190, load:0,seg:0,t:0,dir:1,waitT:0, key:'feederF' },
+];
+
+/* --- タレット --- */
+const turrets=[
+  { id:'turret1', x:340,  y:210, active:false, cd:0, angle:0 },
+  { id:'turret2', x:600,  y:895, active:false, cd:0, angle:0 },
+  { id:'turret3', x:1030, y:520, active:false, cd:0, angle:0 },
+  { id:'turret4', x:165,  y:480, active:false, cd:0, angle:0 },
+];
+const collector={ active:false, x:900, y:700, inv:0, tx:0, ty:0, walk:0, dx:1, dy:0, wait:0 };
+
+/* --- 研究ツリー --- */
+const RESEARCH=[
+  { id:'chop1', ic:'🪓', nm:{ja:'伐採学',en:'Forestry I'}, ds:{ja:'伐採速度 +25%',en:'Chop speed +25%'},        pt:'log',    cost:60,  req:null },
+  { id:'chop2', ic:'🌲', nm:{ja:'林学',en:'Forestry II'}, ds:{ja:'伐採/回収範囲 +60',en:'Chop/pickup range +60'},    pt:'log',    cost:300, req:'chop1' },
+  { id:'logi1', ic:'🛤', nm:{ja:'物流学',en:'Logistics'}, ds:{ja:'トロッコ積載 +4',en:'Cart capacity +4'},      pt:'log',    cost:200, req:'chop1' },
+  { id:'hunt1', ic:'🏹', nm:{ja:'狩猟学',en:'Hunting'}, ds:{ja:'クマの肉ドロップ +1',en:'Bear meat drop +1'},  pt:'cooked', cost:80,  req:null },
+  { id:'trade1',ic:'🛒', nm:{ja:'商学',en:'Commerce'}, ds:{ja:'客の購入数 +1',en:'Customers buy +1'},        pt:'cooked', cost:150, req:'hunt1' },
+  { id:'fish1', ic:'🎣', nm:{ja:'漁業学',en:'Fishery'}, ds:{ja:'漁の速度 +30%',en:'Fishing speed +30%'},        pt:'gfish',  cost:50,  req:null },
+  { id:'trade2',ic:'💰', nm:{ja:'経済学',en:'Economics'}, ds:{ja:'全売値 +25%',en:'All prices +25%'},          pt:'gfish',  cost:120, req:'fish1' },
+];
+const research={ done:{} };
+const rpts={ log:0, cooked:0, gfish:0 };
+const PT_E={ log:'🪵', cooked:'🍗', gfish:'🍢' };
+function applyResearch(id){
+  research.done[id]=true;
+  if(id==='chop1') state.chopInt*=0.75;
+  if(id==='chop2'){ state.chopRange+=60; state.pickRange+=60; }
+  if(id==='hunt1') state.dropBonus=1;
+  if(id==='fish1') state.fishMul=0.7;
+  if(id==='trade1') state.wantBonus=1;
+  if(id==='trade2') state.priceMul=1.25;
+  if(id==='logi1') state.cartCapBonus=4;
+  addFloater(player.x,player.y-90,T().fl_rdone,'#bfe8ff');
+  snd.research();
+}
+const LAB={ x:1060, y:650 };
+const HQ={ x:0, y:0 };
+const FOREST_IDS=['axe1','lumber1','clerk1','axe2','cartwood','area1','area2','turret1','turret2','turret3','turret4','grill','shop2','cartmeat','collector'];
+const RIVER_IDS=['exp_river','clerkF','fisher','cartF','feederF','mill'];
+const cer={ t:0, text:'' };
+const PROJECTS=[
+  { id:'logi',    nk:'pj_logi_n', dk:'pj_logi_d', cost:2500, type:'instant' },
+  { id:'menu',    nk:'pj_menu_n', dk:'pj_menu_d', cost:1500, type:'sales' },
+  { id:'explore', nk:'pj_exp_n',  dk:'pj_exp_d',  cost:2000, type:'timed', dur:90 },
+  { id:'mystery', nk:'pj_mys_n',  dk:'pj_mys_d',  cost:3000, type:'instant', req:'explore' },
+];
+const proj={ done:{}, cur:null, t:0, menuLeft:150 };
+function applyProject(id){
+  proj.done[id]=true; proj.cur=null;
+  if(id==='logi'){
+    state.cartCapBonus+=4;
+    for(const c of carts) c.speed*=1.3;
+    addFloater(player.x,player.y-100,T().fl_logi,'#ffd27f');
+  }
+  if(id==='menu'){
+    MAT.cooked.price=24;
+    addFloater(player.x,player.y-100,T().fl_menu,'#ffd27f');
+  }
+  if(id==='explore'){
+    state.foundMountain=true;
+    ceremony(T().cer_mtn);
+  }
+  if(id==='mystery'){
+    state.priceMul*=1.1;
+    addFloater(player.x,player.y-100,T().fl_mys,'#e8c7ff');
+  }
+  snd.research();
+  if(hqmOpen) renderHQM();
+}
+function updateProjects(dt){
+  if(proj.cur==='explore'){
+    proj.t+=dt;
+    if(proj.t>=90) applyProject('explore');
+    else if(hqmOpen&&Math.floor(proj.t)!==Math.floor(proj.t-dt)) renderHQM();
+  }
+}
+function ceremony(text){
+  cer.t=3.2; cer.text=text;
+  for(let i=0;i<60;i++) confetti.push({x:player.x+(Math.random()-.5)*400,y:player.y-120,vx:(Math.random()-.5)*420,vy:-Math.random()*360-120,t:0,hue:Math.random()*360});
+  snd.unlock();
+  setTimeout(()=>snd.unlock(),250);
+}
+// 川エリアを「表示」してよいか(地形・川への道・柵の描画判定)。
+// 森制覇(forestDone)でtrue = 「川エリアを開拓」パッド出現と同タイミングで地形が現れる。
+// ゲーム的アクティブ化(漁・販売・客)は別途 state.unlocked.exp_river で判定し続ける。
+function riverShown(){ return state.forestDone||state.unlocked.exp_river; }
+
+/* --- アンロックパッド --- */
+const pads=[
+  { id:'axe1',     x:500, y:510, cost:20,  icon:'⚡', label:{ja:'一撃伐採',en:'One-Hit Chop'}, req:null },
+  { id:'lumber1',  x:245, y:608, cost:50,  icon:'🪓', label:{ja:'植林場+木こり',en:'Tree Farm + Logger'}, req:null },
+  { id:'clerk1',   x:445, y:415, cost:80,  icon:'🧑', label:{ja:'売り子を雇う',en:'Hire Clerk'}, req:'lumber1' },
+  { id:'axe2',     x:545, y:735, cost:300, icon:'⚡', label:{ja:'範囲伐採',en:'Area Chop'}, req:'axe1' },
+  { id:'cartwood', x:300, y:520, cost:200, icon:'🛤', label:{ja:'木材トロッコ',en:'Log Minecart'}, req:'clerk1' },
+  { id:'area1',    x:672, y:672, cost:140, icon:'🚧', label:{ja:'エリア拡張+柵',en:'Expand + Fence'}, req:'clerk1' },
+  { id:'area2',    x:640, y:800, cost:450, icon:'🚧', label:{ja:'エリア拡張 II',en:'Expand II'}, req:'area1' },
+  { id:'turret1',  x:340, y:210, cost:260, icon:'🏹', label:{ja:'タレット(北西)',en:'Turret (NW)'}, req:'area1' },
+  { id:'turret2',  x:600, y:895, cost:260, icon:'🏹', label:{ja:'タレット(南)',en:'Turret (S)'}, req:'area1' },
+  { id:'turret3',  x:1030,y:520, cost:260, icon:'🏹', label:{ja:'タレット(東)',en:'Turret (E)'}, req:'area1' },
+  { id:'turret4',  x:165, y:480, cost:260, icon:'🏹', label:{ja:'タレット(西)',en:'Turret (W)'}, req:'area1' },
+  { id:'grill',    x:700, y:560, cost:120, icon:'🍳', label:{ja:'調理場+調理人',en:'Grill + Cook'}, req:'lumber1' },
+  { id:'shop2',    x:880, y:560, cost:200, icon:'🍗', label:{ja:'肉売り場+売り子',en:'Meat Shop + Clerk'}, req:'grill' },
+  { id:'cartmeat', x:810, y:462, cost:450, icon:'🛤', label:{ja:'肉トロッコ',en:'Meat Minecart'}, req:'shop2' },
+  { id:'collector',x:950, y:710, cost:850, icon:'🧺', label:{ja:'肉回収スタッフ',en:'Meat Collector'}, req:['cartmeat','turret2','turret3','turret4'] },
+  { id:'exp_river',x:1175,y:500, cost:2000,icon:'🌊', label:{ja:'川エリアを開拓',en:'Expand to River'}, req:'area1' },
+  { id:'clerkF',   x:1390,y:260, cost:600, icon:'🧑', label:{ja:'売り子(川魚)',en:'Fish Clerk'}, req:'exp_river' },
+  { id:'fisher',   x:1480,y:700, cost:800, icon:'🎣', label:{ja:'漁師+漁場',en:'Fisher + Grounds'}, req:'exp_river' },
+  { id:'cartF',    x:1480,y:520, cost:1200,icon:'🛤', label:{ja:'魚トロッコ',en:'Fish Minecart'}, req:'fisher' },
+  { id:'feederF',  x:1700,y:600, cost:900, icon:'📦', label:{ja:'魚の自動補給',en:'Auto Fish Supply'}, req:'fisher' },
+  { id:'mill',     x:1740,y:790, cost:1800,icon:'💧', label:{ja:'水車(全加工+25%)',en:'Watermill (+25% craft)'}, req:'cartF' },
+  { id:'hq_n',     x:600, y:75,  cost:3000,icon:'🏢', label:{ja:'本社を建てる(北)',en:'Build HQ (North)'}, req:'exp_river' },
+  { id:'hq_w',     x:75,  y:430, cost:3000,icon:'🏢', label:{ja:'本社を建てる(西)',en:'Build HQ (West)'},  req:'exp_river' },
+  { id:'hq_s',     x:600, y:935, cost:3000,icon:'🏢', label:{ja:'本社を建てる(南)',en:'Build HQ (South)'}, req:'exp_river' },
+];
+pads.forEach(p=>{ p.paid=0; p.hold=0; });
+const RIVER_SUB=['clerkF','fisher','cartF','feederF','mill']; // 川エリアの開放ステップ(予告表示対象)
+// 購入可否(従来のpadVisibleロジック)。近接購入・ヒント・誘導矢印はこれで判定。
+function padBuyable(p){
+  if(state.unlocked[p.id]) return false;
+  if(p.id==='exp_river'&&!state.forestDone) return false;
+  if(p.id.indexOf('hq_')===0&&(!state.riverDone||state.hqBuilt)) return false;
+  if(p.req==null) return true;
+  if(Array.isArray(p.req)) return p.req.some(r=>state.unlocked[r]);
+  return !!state.unlocked[p.req];
+}
+// まだ買えないが「予告(ロック)表示」すべきか。川エリア表示中の未開放ステップを見せ、開拓規模を伝える。
+function padPreview(p){
+  if(state.unlocked[p.id]||padBuyable(p)) return false;
+  return riverShown()&&RIVER_SUB.indexOf(p.id)>=0;
+}
+// 描画対象か(購入可能 or 予告表示)。
+function padVisible(p){ return padBuyable(p)||padPreview(p); }
+
+/* --- ワールド生成 --- */
+(function genWorld(){
+  // 植林場の木
+  for(const o of [{x:-70,y:-30},{x:75,y:-22},{x:-2,y:52}]) addNode(380+o.x,700+o.y,'tree','plot');
+  // 川の魚スポット(野生3+漁場3)
+  for(let i=0;i<3;i++) addNode(RIVER_X-36+(i%2)*22, 200+i*120, 'fish','wild');
+  for(let i=0;i<3;i++) addNode(RIVER_X-30+(i%2)*20, 580+i*130, 'fish','plotF');
+  // 野生の木(リング、施設回避)
+  const avoid=[...pads,...counters,...stores,...processors,...turrets,LAB,
+    {x:540,y:462},{x:700,y:462},{x:380,y:600},{x:380,y:450},
+    ...patches.flatMap(p=>[{x:p.x,y:p.y}]),
+    ...nodes.map(n=>({x:n.x,y:n.y}))];
+  function ok(x,y){
+    if(Math.abs(x-ROAD_X)<82&&y<CY) return false;
+    for(const a of avoid){ if(Math.hypot(x-a.x,y-a.y)<104) return false; }
+    return true;
+  }
+  function ring(n,r0,r1,off){
+    for(let i=0;i<n;i++){
+      const a=i/n*Math.PI*2+off;
+      const r=r0+Math.random()*(r1-r0);
+      const x=CX+Math.cos(a)*(r+40), y=CY+Math.sin(a)*r;
+      if(x<55||x>1240-55||y<70||y>H-45) continue;
+      if(!ok(x,y)) continue;
+      addNode(x,y,'tree','wild');
+    }
+  }
+  ring(28,210,255,0.2); ring(32,300,375,0.45); ring(34,430,505,0.1); ring(30,520,575,0.3); ring(22,585,645,0.55);
+})();
+
+const bears=[],groundItems=[],customers=[],projectiles=[],leaves=[];
+const particles=[],floaters=[],bills=[],confetti=[];
+
+/* ================= アンロック ================= */
+function expandTerritory(r){
+  state.territoryR=r;
+  for(const n of nodes){
+    if(n.dead||n.owner!=='wild'||n.kind!=='tree'||n.hp<=0) continue;
+    if(Math.hypot(n.x-CX,n.y-CY)<r+50){
+      n.dead=true;
+      for(let i=0;i<4;i++) groundItems.push({x:n.x+(Math.random()-.5)*60,y:n.y+(Math.random()-.5)*40,type:'log',bob:Math.random()*6});
+      chips(n.x,n.y-40,'#c8975a',10);
+    }
+  }
+}
+function unlock(id,px,py){
+  state.unlocked[id]=true;
+  if(!DBG_QUIET){
+    snd.unlock();
+    for(let i=0;i<26;i++) confetti.push({x:px,y:py-10,vx:(Math.random()-.5)*260,vy:-Math.random()*260-60,t:0,hue:Math.random()*360});
+  }
+  if(id==='axe1') state.instaFell=true;
+  if(id==='axe2') state.aoeFell=true;
+  if(id==='clerk1') counters[0].staffed=true;
+  if(id==='shop2'){ counters[1].unlocked=true; counters[1].staffed=true; }
+  if(id==='clerkF') counters[2].staffed=true;
+  if(id==='area1') expandTerritory(250);
+  if(id==='area2') expandTerritory(330);
+  if(id==='exp_river'){
+    W=W2;
+    counters[2].unlocked=true;
+    addFloater(1400,460,T().fl_river,'#bfe8ff');
+  }
+  const tu=turrets.find(t=>t.id===id);
+  if(tu){
+    tu.active=true;
+    if(!DBG_QUIET) spawnRush(8,tu.x,tu.y);
+    if(rushTimer<0) rushTimer=60;
+  }
+  if(id==='collector'){ collector.active=true; collector.x=px; collector.y=py; }
+  if(id.indexOf('hq_')===0){
+    state.hqBuilt=id.slice(3);
+    buildHQ(state.hqBuilt);
+    document.getElementById('tabHQ').textContent=T().tab_hq;
+    document.getElementById('tabSettings').textContent=T().tab_set;
+    document.getElementById('tabbar').style.display='flex';
+  }
+}
+function shiftWorld(dx,dy){
+  const lists=[nodes,bears,groundItems,customers,workers,pads,counters,stores,processors,patches,turrets];
+  for(const arr of lists) for(const o of arr){
+    if(o.x!==undefined){ o.x+=dx; o.y+=dy; }
+    if(o.pileX!==undefined){ o.pileX+=dx; o.pileY+=dy; }
+    if(o.roadX!==undefined) o.roadX+=dx;
+    if(o.tx!==undefined){ o.tx+=dx; o.ty+=dy; }
+  }
+  for(const c of carts) for(const pt of c.path){ pt.x+=dx; pt.y+=dy; }
+  player.x+=dx; player.y+=dy;
+  collector.x+=dx; collector.y+=dy; collector.tx+=dx; collector.ty+=dy;
+  HQ.x+=dx; HQ.y+=dy;
+  CX+=dx; CY+=dy; ROAD_X+=dx; ROAD_F+=dx; RIVER_X+=dx;
+  W+=dx; H+=dy;
+  particles.length=0; floaters.length=0; bills.length=0; projectiles.length=0; leaves.length=0;
+}
+function inHQZone(x,y){
+  if(!state.hqBuilt) return false;
+  return Math.abs(x-HQ.x)<HQ_W/2+70&&Math.abs(y-HQ.y)<HQ_H/2+90;
+}
+function buildHQ(dir){
+  if(dir==='w'){ shiftWorld(700,0); HQ.x=420; HQ.y=CY; }
+  else if(dir==='n'){ shiftWorld(0,620); HQ.x=CX-320; HQ.y=360; }
+  else { H+=620; HQ.x=CX-240; HQ.y=H-380; }
+  // 本社ゾーン内の既存ノード(木・切り株)を除去
+  for(const n of nodes){
+    if(!n.dead&&inHQZone(n.x,n.y)) n.dead=true;
+  }
+  // 装飾の木はゾーンの外周にだけ
+  for(let i=0;i<10;i++){
+    const a=i/10*Math.PI*2+0.4;
+    const tx=HQ.x+Math.cos(a)*(HQ_W/2+110+Math.random()*70);
+    const ty=HQ.y+Math.sin(a)*(HQ_H/2+120+Math.random()*50);
+    if(inRoadZone(tx,ty)) continue;
+    if(inHQZone(tx,ty)) continue;
+    if(tx<50||tx>W-50||ty<70||ty>H-50) continue;
+    addNode(tx,ty,'tree','wild');
+  }
+  ceremony(T().cer_hq);
+}
+
+/* ================= 入力 ================= */
+const keys={};
+window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+const joy={active:false,ox:0,oy:0,x:0,y:0,id:null};
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  const t=e.changedTouches[0];
+  joy.active=true; joy.id=t.identifier; joy.ox=t.clientX; joy.oy=t.clientY; joy.x=t.clientX; joy.y=t.clientY;
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  for(const t of e.changedTouches){ if(t.identifier===joy.id){ joy.x=t.clientX; joy.y=t.clientY; } }
+},{passive:false});
+function endTouch(e){ for(const t of e.changedTouches){ if(t.identifier===joy.id){ joy.active=false; joy.id=null; } } }
+canvas.addEventListener('touchend',endTouch); canvas.addEventListener('touchcancel',endTouch);
+let mouseDown=false;
+canvas.addEventListener('mousedown',e=>{mouseDown=true;joy.active=true;joy.ox=e.clientX;joy.oy=e.clientY;joy.x=e.clientX;joy.y=e.clientY;});
+canvas.addEventListener('mousemove',e=>{if(mouseDown){joy.x=e.clientX;joy.y=e.clientY;}});
+window.addEventListener('mouseup',()=>{mouseDown=false;joy.active=false;});
+
+/* ================= 共通ユーティリティ ================= */
+function dist(a,b){ return Math.hypot(a.x-b.x,a.y-b.y); }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function moveTo(o,tx,ty,sp,dt){
+  const dx=tx-o.x,dy=ty-o.y,d=Math.hypot(dx,dy);
+  if(d<4) return true;
+  o.x+=dx/d*sp*dt; o.y+=dy/d*sp*dt;
+  o.dx=dx/d; o.dy=dy/d; o.walk=(o.walk||0)+dt*10;
+  return false;
+}
+function addFloater(x,y,text,color){ floaters.push({x,y,text,color:color||'#fff',t:0}); }
+function flyBill(sx,sy,tx,ty,toHud){ bills.push({x:sx,y:sy,sx,sy,tx,ty,t:0,toHud:!!toHud}); }
+function chips(x,y,color,n){ for(let i=0;i<(n||6);i++) particles.push({x,y,vx:(Math.random()-.5)*160,vy:-Math.random()*160-30,t:0,color}); }
+function pileTop(c){ return {x:c.pileX, y:c.pileY-6-Math.min(60,c.pile/8)}; }
+function counterOf(type){ return counters.find(c=>c.type===type); }
+
+/* ================= Storage統一仕様 ================= */
+function dumpAll(srcInv,type,addFn,fx,fy,emoji,color){
+  const n=srcInv[type];
+  if(n<=0) return 0;
+  srcInv[type]=0; addFn(n);
+  addFloater(fx,fy,'+'+n+' '+emoji,color||'#fff');
+  snd.pick();
+  return n;
+}
+function depositTo(actor){
+  for(const c of counters){
+    if(!c.unlocked||dist(actor,c)>85) continue;
+    dumpAll(actor.inv,c.type,n=>{c.stock+=n;},c.x,c.y-74,MAT[c.type].e);
+  }
+}
+
+/* ================= プレイヤー ================= */
+function updatePlayer(dt){
+  let ix=0,iy=0;
+  if(keys['w']||keys['arrowup'])iy-=1;
+  if(keys['s']||keys['arrowdown'])iy+=1;
+  if(keys['a']||keys['arrowleft'])ix-=1;
+  if(keys['d']||keys['arrowright'])ix+=1;
+  if(joy.active){
+    const jx=joy.x-joy.ox,jy=joy.y-joy.oy,d=Math.hypot(jx,jy);
+    if(d>8){ ix=jx/Math.max(d,40)*(d>40?1:d/40); iy=jy/Math.max(d,40)*(d>40?1:d/40); }
+  }
+  const il=Math.hypot(ix,iy);
+  if(il>0.01){
+    const nx=ix/Math.max(il,1),ny=iy/Math.max(il,1);
+    player.x+=nx*state.speed*dt; player.y+=ny*state.speed*dt;
+    player.dx=nx; player.dy=ny; player.walk+=dt*12;
+  } else player.walk=0;
+  // 川未開拓時は森の東端で進行を止める(柵による当たり判定)
+  const eastLim=state.unlocked.exp_river?W-30:1210;
+  player.x=clamp(player.x,30,eastLim);
+  player.y=clamp(player.y,40,H-30);
+
+  // 伐採(野生の木)
+  player.chopT-=dt;
+  if(player.chopT<=0){
+    const inR=[];
+    for(const n of nodes){
+      if(n.dead||n.hp<=0||n.kind!=='tree'||n.owner!=='wild') continue;
+      if(dist(player,n)<state.chopRange) inR.push(n);
+    }
+    if(inR.length){
+      player.chopT=state.chopInt;
+      player.swing=0.12;
+      const tg=state.aoeFell?inR:[inR[0]];
+      for(const n of tg){
+        const gain=state.instaFell?n.hp:1;
+        n.hp-=gain; n.shake=0.16;
+        player.inv.log+=gain;
+        chips(n.x,n.y-44,'#c8975a',state.instaFell?10:6);
+        if(n.hp<=0){ n.regrowT=n.regrowMax; n.grow=0; }
+      }
+      snd.chop();
+    }
+  }
+  // 釣り(野生の魚): 糸とウキで「釣り中」を可視化
+  player.fishTarget=null;
+  if(state.unlocked.exp_river){
+    player.fishT-=dt;
+    let sp=null,sd=135;
+    for(const n of nodes){
+      if(n.kind!=='fish'||n.owner!=='wild'||n.hp<=0) continue;
+      const d=dist(player,n); if(d<sd){sd=d;sp=n;}
+    }
+    player.fishTarget=sp;
+    if(sp&&player.fishT<=0){
+      player.fishT=state.fishInt*state.fishMul;
+      player.swing=0.12;
+      sp.hp--;
+      player.inv.fish++;
+      player.fishHit=0.25;
+      player.fSum=(player.fSum||0)+1;
+      chips(sp.x,sp.y-4,'#bfe8ff',10);
+      snd.splash();
+      if(sp.hp<=0) sp.regrowT=sp.regrowMax;
+    }
+    player.fSumT=(player.fSumT||0)-dt;
+    if(player.fSumT<=0&&(player.fSum||0)>0){
+      addFloater(player.x,player.y-104,'+'+player.fSum+' 🐟','#bfe8ff');
+      player.fSum=0; player.fSumT=0.5;
+    }
+    if(player.fishHit>0) player.fishHit-=dt;
+  }
+
+  // クマ攻撃
+  player.atkT-=dt;
+  let nb=null,bb=95;
+  for(const b of bears){ const d=dist(player,b); if(d<bb){bb=d;nb=b;} }
+  if(nb&&player.atkT<=0){ player.atkT=0.3; player.swing=0.12; damageBear(nb,nb.boss?4:1,player); }
+
+  // 地面アイテム回収(広範囲)
+  for(let i=groundItems.length-1;i>=0;i--){
+    if(dist(player,groundItems[i])<state.pickRange){
+      player.inv[groundItems[i].type]++;
+      groundItems.splice(i,1);
+      snd.pick();
+    }
+  }
+
+  // 加工機: 入力素材の全量投入
+  for(const pr of processors){
+    if(!state.unlocked[pr.key]||dist(player,pr)>115) continue;
+    dumpAll(player.inv,pr.inType,n=>{pr.amount+=n;},pr.x,pr.y-66,MAT[pr.inType].e);
+  }
+  // 置き場: 触れたら全量受け取り(トロッコ担当分は除く)
+  for(const st of stores){
+    if(!state.unlocked[st.key]||st.amount<=0) continue;
+    if(st.cartBlock&&state.unlocked[st.cartBlock==='cart_meat'?'cartmeat':'cartF']) continue;
+    if(dist(player,st)<95){
+      player.inv[st.type]+=st.amount;
+      addFloater(st.x,st.y-60,'+'+st.amount+' '+MAT[st.type].e,'#ffd27f');
+      st.amount=0;
+      snd.pick();
+    }
+  }
+
+  depositTo(player);
+
+  // 札束回収: お金(数字)は触れた瞬間に全額即クレジット(ノーモーション)。
+  // カウンター上の札束の山は演出残量(visPile)として残し、0.8秒かけて減らして「回収中」に見せる。
+  for(const c of counters){
+    if(c.pile>0&&Math.hypot(player.x-c.pileX,player.y-c.pileY)<72){
+      state.money+=c.pile; state.totalEarned+=c.pile; state.everCollected=true;
+      c.visPile=(c.visPile||0)+c.pile;
+      c.visRate=c.visPile/0.8;            // 残量を0.8秒で出し切る速度
+      c.pile=0;
+    }
+    if(c.visPile>0){                       // 0.8秒で山を減らしつつv30風に札を飛ばす
+      c.visPile=Math.max(0,c.visPile-(c.visRate||c.visPile/0.8)*dt);
+      c.colT=(c.colT||0)-dt;
+      if(c.colT<=0){
+        const towerH=Math.min(16,Math.ceil(state.money/25))*6+56;
+        flyBill(c.pileX,c.pileY-16,player.x-46,player.y-towerH);
+        snd.coin();
+        c.colT=0.04;
+      }
+    }
+  }
+
+  // タレット価格逓増
+  {
+    const TC=[260,420,620,820];
+    const nAct=turrets.filter(t=>t.active).length;
+    for(const p of pads){
+      if(p.id.indexOf('turret')===0&&!state.unlocked[p.id]) p.cost=TC[Math.min(nAct,3)];
+    }
+  }
+  // パッド支払い(0.35秒ホールド→儀式注入 最大0.9秒)
+  for(const p of pads){
+    if(!padBuyable(p)) continue;
+    if(dist(player,p)<56){ p.hold+=dt; } else { p.hold=0; }
+    if(p.hold>0.35&&state.money>0){
+      const rate=Math.max(110,p.cost/0.9);
+      let pay=Math.min(state.money,Math.max(0.5,rate*dt),p.cost-p.paid);
+      p.paid+=pay; state.money-=pay;
+      p.streamT=(p.streamT||0)-dt;
+      if(p.streamT<=0){
+        const towerH=Math.min(16,Math.ceil(state.money/25))*6+60;
+        flyBill(player.x-46,player.y-towerH,p.x+(Math.random()-.5)*30,p.y-8);
+        snd.cash();
+        p.streamT=0.045;
+      }
+      if(p.paid>=p.cost-0.01){
+        p.paid=p.cost;
+        for(let i=0;i<22;i++) confetti.push({x:p.x,y:p.y-8,vx:(Math.random()-.5)*340,vy:-Math.random()*320-80,t:0,hue:45+Math.random()*40});
+        unlock(p.id,p.x,p.y);
+      }
+    }
+  }
+  state.money=Math.max(0,Math.round(state.money*10)/10);
+  if(player.swing>0) player.swing-=dt;
+}
+
+/* ================= クマ(3倍密度) ================= */
+function mkBear(bx,by,boss){
+  const hp=boss?16:3;
+  return {x:bx,y:by,hp,maxHp:hp,boss:!!boss,flash:0,tx:bx,ty:by,wait:0,walk:0,dx:1,dy:0,mode:'roam',modeT:1+Math.random()*2,atkT:0,lunge:0,siegeA:0};
+}
+function damageBear(b,dmg,from){
+  b.hp-=dmg; b.flash=0.15;
+  if(from){
+    const kd=Math.hypot(b.x-from.x,b.y-from.y)||1;
+    const kb=b.boss?5:16;
+    b.x+=(b.x-from.x)/kd*kb; b.y+=(b.y-from.y)/kd*kb;
+  }
+  chips(b.x,b.y-30,'#fff',5);
+  snd.hit();
+  if(b.hp<=0){
+    const drops=(b.boss?10:3)+state.dropBonus*(b.boss?3:1);
+    for(let i=0;i<drops;i++) groundItems.push({x:b.x+(Math.random()-.5)*(b.boss?140:70),y:b.y+(Math.random()-.5)*(b.boss?100:50),type:'raw',bob:Math.random()*6});
+    addFloater(b.x,b.y-50,b.boss?'👑🍖×'+drops+'!!':'🍖×'+drops+'!','#ffb3b3');
+    chips(b.x,b.y-20,'#e88',b.boss?24:12);
+    const i=bears.indexOf(b);
+    if(i>=0) bears.splice(i,1);
+    snd.drop();
+  }
+}
+let bearTimer=2;
+let rushTimer=-1;
+function inRoadZone(x,y){
+  if(Math.abs(x-ROAD_X)<115&&y<CY) return true;
+  if(state.unlocked.exp_river&&Math.abs(x-ROAD_F)<115&&y<CY) return true;
+  return false;
+}
+function spawnRush(n,cx,cy){
+  while(bears.length+n>26){
+    let far=null,fd=-1;
+    for(const b of bears){ const d=dist(b,{x:CX,y:CY}); if(d>fd){fd=d;far=b;} }
+    if(!far) break;
+    bears.splice(bears.indexOf(far),1);
+  }
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2,r=70+Math.random()*150;
+    let bx=clamp(cx+Math.cos(a)*r,60,W-60),by=clamp(cy+Math.sin(a)*r,70,H-50);
+    if(inRoadZone(bx,by)) bx+=160;
+    bears.push(mkBear(bx,by, i===0&&Math.random()<0.25));
+  }
+  addFloater(clamp(cx,140,W-140),clamp(cy-90,80,H-80),T().fl_rush,'#ffd0d0');
+  snd.drop();
+}
+function updateBears(dt){
+  if(rushTimer>0){
+    rushTimer-=dt;
+    if(rushTimer<=0){
+      const a=Math.random()*Math.PI*2;
+      spawnRush(10, clamp(CX+Math.cos(a)*430,80,W-80), clamp(CY+Math.sin(a)*420,90,H-60));
+      rushTimer=80+Math.random()*40;
+    }
+  }
+  bearTimer-=dt;
+  const nT=turrets.filter(t=>t.active).length;
+  const maxBears=Math.min(20,10+2*nT);
+  if(bearTimer<=0&&bears.length<maxBears){
+    bearTimer=2.0+Math.random()*1.8;
+    let a=Math.random()*Math.PI*2,bx,by;
+    for(let tries=0;tries<8;tries++){
+      bx=clamp(CX+Math.cos(a)*470,60,W-60);
+      by=clamp(CY+Math.sin(a)*450,70,H-50);
+      if(!inRoadZone(bx,by)) break;
+      a=Math.random()*Math.PI*2;
+    }
+    const boss=Math.random()<0.06;
+    bears.push(mkBear(bx,by,boss));
+    if(boss) addFloater(bx,by-60,T().fl_boss,'#ffd0a0');
+  }
+  const fenced=!!state.unlocked.area1;
+  for(const b of bears){
+    if(b.flash>0)b.flash-=dt;
+    if(b.lunge>0)b.lunge-=dt;
+    b.modeT-=dt;
+    if(b.modeT<=0){
+      if(b.mode==='roam'){
+        b.mode='siege'; b.modeT=6+Math.random()*5;
+        let a;
+        for(let tries=0;tries<10;tries++){
+          a=Math.random()*Math.PI*2;
+          const fx=CX+Math.cos(a)*(state.territoryR+78);
+          if(!inRoadZone(fx,CY+Math.sin(a)*state.territoryR)) break;
+        }
+        b.siegeA=a;
+      } else { b.mode='roam'; b.modeT=3+Math.random()*4; b.wait=0; }
+    }
+    if(b.mode==='siege'){
+      const R=state.territoryR;
+      const fx=CX+Math.cos(b.siegeA)*(R+78);
+      const fy=CY+Math.sin(b.siegeA)*(R*0.92+50);
+      if(moveTo(b,fx,fy,b.boss?44:62,dt)){
+        b.walk=0;
+        b.atkT-=dt;
+        if(b.atkT<=0){
+          b.atkT=0.85; b.lunge=0.22;
+          const px=CX+Math.cos(b.siegeA)*(R+40);
+          const py=CY+Math.sin(b.siegeA)*R;
+          chips(px,py-16,fenced?'#c79a68':'#d4ab72',6);
+          beep(120,.07,'sawtooth',.05,70);
+        }
+      }
+    } else {
+      b.wait-=dt;
+      if(b.wait<=0){
+        let a,r,tx,ty;
+        for(let tries=0;tries<8;tries++){
+          a=Math.random()*Math.PI*2;
+          r=state.territoryR+90+Math.random()*150;
+          tx=clamp(CX+Math.cos(a)*r,60,W-60);
+          ty=clamp(CY+Math.sin(a)*r*0.9,70,H-50);
+          if(!inRoadZone(tx,ty)) break;
+        }
+        b.tx=tx; b.ty=ty;
+        b.wait=3+Math.random()*3;
+      }
+      moveTo(b,b.tx,b.ty,b.boss?38:52,dt);
+    }
+    {
+      const dx=b.x-CX,dy=(b.y-CY)/0.92;
+      const d=Math.hypot(dx,dy),R=state.territoryR+34;
+      if(d<R){ const f=R/(d||1); b.x=CX+dx*f; b.y=CY+dy*0.92*f; }
+    }
+    if(inRoadZone(b.x,b.y)){
+      const rx=(state.unlocked.exp_river&&Math.abs(b.x-ROAD_F)<115)?ROAD_F:ROAD_X;
+      b.x+=(b.x>=rx?1:-1)*240*dt;
+      b.wait=0; if(b.mode==='siege')b.modeT=0;
+    }
+  }
+}
+function updateTurrets(dt){
+  for(const tu of turrets){
+    if(!tu.active) continue;
+    tu.cd-=dt;
+    let tgt=null,td=380;
+    for(const b of bears){ const d=dist(tu,b); if(d<td){td=d;tgt=b;} }
+    if(tgt){
+      tu.angle=Math.atan2(tgt.y-(tu.y-44),tgt.x-tu.x);
+      if(tu.cd<=0){
+        tu.cd=0.5;
+        projectiles.push({x:tu.x,y:tu.y-44,vx:Math.cos(tu.angle)*560,vy:Math.sin(tu.angle)*560,t:0});
+        snd.shot();
+      }
+    }
+  }
+  for(let i=projectiles.length-1;i>=0;i--){
+    const pr=projectiles[i];
+    pr.t+=dt; pr.x+=pr.vx*dt; pr.y+=pr.vy*dt;
+    let hit=false;
+    for(const b of bears){
+      if(Math.hypot(b.x-pr.x,b.y-26-pr.y)<32){ damageBear(b,1,null); hit=true; break; }
+    }
+    if(hit||pr.t>1.1) projectiles.splice(i,1);
+  }
+}
+
+/* ================= 汎用生産システム ================= */
+function updateNodes(dt){
+  for(const n of nodes){
+    if(n.dead) continue;
+    if(n.shake>0)n.shake-=dt;
+    if(n.hp<=0){
+      n.regrowT-=dt;
+      if(n.regrowT<=0) n.hp=n.maxHp;
+    } else if(n.grow<1){
+      n.grow=Math.min(1,n.grow+dt*2.6);
+    }
+  }
+}
+function updateProcessors(dt){
+  for(const pr of processors){
+    if(!state.unlocked[pr.key]) continue;
+    const out=Sfind(pr.outId);
+    if(pr.amount>0){
+      pr.t+=dt;
+      if(pr.t>=cookInt()){
+        pr.t=0; pr.amount--; out.amount++;
+        chips(pr.x,pr.y-48,pr.fx==='fire'?'#ffae42':'#bfd8e8',4);
+      }
+    } else pr.t=0;
+  }
+}
+function updateWorkers(dt){
+  for(const w of workers){
+    if(!state.unlocked[w.key]) continue;
+    w.timer-=dt;
+    const st=Sfind(w.outId);
+    const carry=w.inv[st.type];
+    if(carry>=w.carryMax){
+      if(moveTo(w,st.x,st.y+16,300,dt)){
+        const put=Math.min(carry,st.cap-st.amount);
+        st.amount+=put; w.inv[st.type]-=put;
+      }
+    } else if(st.amount>=st.cap){
+      moveTo(w,st.x-40,st.y+26,300,dt); // 満杯シグナル: 待機
+    } else {
+      if(!w.target||w.target.hp<=0){
+        w.target=null; let bd=1e9;
+        for(const n of nodes){
+          if(n.owner!==w.owner||n.hp<=0) continue;
+          const d=dist(w,n); if(d<bd){bd=d;w.target=n;}
+        }
+      }
+      if(w.target){
+        moveTo(w,w.target.x+(w.target.kind==='fish'?-46:30),w.target.y+12,300,dt);
+        if(dist(w,w.target)<70&&w.timer<=0){
+          w.timer=w.interval*(w.target.kind==='fish'?state.fishMul:1);
+          w.swing=0.12;
+          w.target.shake=0.16; w.target.hp--;
+          chips(w.target.x,w.target.y-(w.target.kind==='fish'?6:44),w.target.kind==='fish'?'#9fd8ff':'#c8975a',5);
+          w.inv[st.type]++;
+          if(w.target.hp<=0){ w.target.regrowT=w.target.regrowMax; w.target=null; }
+        }
+      }
+    }
+    if(w.swing>0)w.swing-=dt;
+  }
+}
+function cartPos(c){
+  const p=c.path,i=clamp(c.seg,0,p.length-2);
+  return { x:p[i].x+(p[i+1].x-p[i].x)*c.t, y:p[i].y+(p[i+1].y-p[i].y)*c.t };
+}
+function updateCarts(dt){
+  for(const c of carts){
+    if(!state.unlocked[c.key]) continue;
+    if(c.dir>0&&c.seg===0&&c.t===0&&c.load===0){
+      c.waitT-=dt;
+      if(c.waitT>0) continue;
+      if(c.kind!=='money'){
+        const src=Sfind(c.srcId);
+        if(src.amount>0){
+          const take=Math.min(c.cap+state.cartCapBonus,src.amount);
+          src.amount-=take; c.load=take; snd.pick();
+        } else { c.waitT=0.2; continue; }
+      } else { // money caravan
+        const src=counterOf(c.srcType);
+        if(src.pile>=20){
+          c.load=src.pile; src.pile=0; snd.cash();
+        } else { c.waitT=0.5; continue; }
+      }
+    }
+    const p=c.path,i=clamp(c.seg,0,p.length-2);
+    const segLen=Math.hypot(p[i+1].x-p[i].x,p[i+1].y-p[i].y)||1;
+    c.t+=c.dir*(c.speed*dt)/segLen;
+    if(c.t>=1){
+      c.t=0; c.seg++;
+      if(c.seg>=p.length-1){
+        c.seg=p.length-2; c.t=1;
+        if(c.kind==='feed'&&c.load>0){
+          const pr=processors.find(q=>q.id===c.dstProc);
+          pr.amount+=c.load;
+          addFloater(pr.x,pr.y-66,'+'+c.load+' '+MAT[pr.inType].e,'#bfe8ff');
+          c.load=0; c.dir=-1; continue;
+        }
+        const target=counterOf(c.dstType);
+        if(target&&target.unlocked&&c.load>0){
+          if(c.kind==='goods'){
+            target.stock+=c.load;
+            addFloater(target.x,target.y-74,'+'+c.load+' '+MAT[target.type].e,'#fff');
+          } else {
+            target.pile+=c.load;
+            addFloater(target.pileX,target.pileY-60,'🐴 +$'+Math.floor(c.load),'#aaffaa');
+            snd.cash();
+          }
+          c.load=0;
+        }
+        c.dir=-1;
+      }
+    } else if(c.t<=0){
+      c.t=1; c.seg--;
+      if(c.seg<0){ c.seg=0; c.t=0; c.dir=1; c.waitT=0.15; }
+    }
+  }
+}
+function updateCollector(dt){
+  if(!collector.active) return;
+  const co=collector;
+  const grill=processors[0];
+  if(co.inv>=5||(co.inv>0&&!groundItems.some(g=>g.type==='raw'))){
+    if(dist(co,grill)<80){ grill.amount+=co.inv; co.inv=0; }
+    else moveTo(co,grill.x-50,grill.y+16,320,dt);
+    return;
+  }
+  let gi=null,gd=1e9;
+  for(const g of groundItems){ if(g.type!=='raw')continue; const d=dist(co,g); if(d<gd){gd=d;gi=g;} }
+  if(gi){
+    if(dist(co,gi)<60){
+      const idx=groundItems.indexOf(gi);
+      if(idx>=0){ groundItems.splice(idx,1); co.inv++; }
+    } else moveTo(co,gi.x,gi.y,320,dt);
+  } else {
+    co.wait-=dt;
+    if(co.wait<=0){
+      const a=Math.random()*Math.PI*2;
+      const r=state.territoryR+120+Math.random()*120;
+      co.tx=clamp(CX+Math.cos(a)*r,60,W-60);
+      co.ty=clamp(CY+Math.sin(a)*r*0.9,70,H-50);
+      co.wait=3;
+    }
+    moveTo(co,co.tx||co.x,co.ty||co.y,220,dt);
+  }
+}
+
+/* ================= 顧客 ================= */
+const QLEN=7;
+function updateCustomers(dt){
+  for(const c of counters){
+    if(!c.unlocked) continue;
+    while(c.queue.length<QLEN){
+      const idx=c.queue.length;
+      const baseWant=(c.type==='log'?3:2)+state.wantBonus;
+      const cu={x:c.roadX+(Math.random()-.5)*26,y:Math.min(-26,c.y-70-idx*48-30),
+                counter:c,want:baseWant,buyT:0.1,carry:0,
+                state:'queue',walk:0,dx:0,dy:1,hue:Math.floor(Math.random()*360)};
+      c.queue.push(cu); customers.push(cu);
+    }
+  }
+  for(let i=customers.length-1;i>=0;i--){
+    const cu=customers[i];
+    if(cu.state==='queue'){
+      const idx=cu.counter.queue.indexOf(cu);
+      const sx=cu.counter.x,sy=cu.counter.y-70-idx*48;
+      const arrived=moveTo(cu,sx,sy,260,dt);
+      if(arrived){cu.walk=0;cu.dy=1;cu.dx=0;}
+      const canServe=cu.counter.staffed||dist(player,cu.counter)<110;
+      if(idx===0&&arrived&&canServe){
+        cu.buyT-=dt;
+        if(cu.buyT<=0&&cu.counter.stock>0){
+          cu.counter.stock--; cu.want--; cu.carry++;
+          rpts[cu.counter.type]=(rpts[cu.counter.type]||0)+1;
+          if(proj.cur==='menu'&&cu.counter.type==='cooked'){
+            proj.menuLeft--;
+            if(proj.menuLeft<=0) applyProject('menu');
+            else if(hqmOpen&&proj.menuLeft%5===0) renderHQM();
+          }
+          const v=priceOf(cu.counter.type);
+          cu.counter.pile+=v; state.soldOnce=true;
+          cu.counter.fxSum=(cu.counter.fxSum||0)+v;
+          cu.buyT=0.06;
+          if(cu.want<=0){ cu.state='leave'; cu.counter.queue.shift(); }
+        }
+      }
+    } else {
+      moveTo(cu,cu.counter.roadX+(Math.random()-.5)*4,-60,300,dt);
+      if(cu.y<-40) customers.splice(i,1);
+    }
+  }
+  for(const c of counters){
+    if(!c.unlocked) continue;
+    c.fxT=(c.fxT||0)-dt;
+    if(c.fxT<=0&&(c.fxSum||0)>0){
+      const pp=pileTop(c);
+      flyBill(c.x,c.y-36,pp.x+(Math.random()-.5)*14,pp.y);
+      addFloater(c.x+42,c.y-58,'+$'+c.fxSum,'#7CFC00');
+      snd.cash();
+      c.fxSum=0; c.fxT=0.18;
+    }
+  }
+}
+
+/* ================= 研究 ================= */
+let labOpen=false, hqmOpen=false, setOpen=false;
+function openSettings(){ setOpen=true; renderSettings(); document.getElementById('settings').style.display='flex'; }
+function closeSettings(){ setOpen=false; document.getElementById('settings').style.display='none'; }
+function renderSettings(){
+  const t=T();
+  document.getElementById('setT').textContent=t.set_t;
+  document.getElementById('setLangLabel').textContent=t.set_lang;
+  document.getElementById('setSoundLabel').textContent=t.set_sound;
+  document.getElementById('setSnd').textContent=t.set_sound+': '+(MUTED?t.set_off:t.set_on);
+  document.getElementById('setSnd').className='setBtn'+(MUTED?' dim':'');
+  document.getElementById('setJa').className='setBtn'+(LANG==='ja'?'':' dim');
+  document.getElementById('setEn').className='setBtn'+(LANG==='en'?'':' dim');
+  document.getElementById('setReset').textContent=t.set_reset;
+  document.getElementById('setVer').textContent=t.set_ver+': '+VERSION;
+  document.getElementById('setX2').textContent=t.cta_x;
+  document.getElementById('setX2').href=X_URL;
+}
+function openHQM(){ hqmOpen=true; renderHQM(); document.getElementById('hqm').style.display='flex'; }
+function closeHQM(){ hqmOpen=false; document.getElementById('hqm').style.display='none'; }
+function renderHQM(){
+  const t=T();
+  document.getElementById('hqmT').textContent=t.hqm_t;
+  document.getElementById('hqmD').textContent=t.hqm_d;
+  const el=document.getElementById('pjList');
+  el.innerHTML='';
+  for(const p of PROJECTS){
+    const div=document.createElement('div');
+    let cls='rNode';
+    const reqOk=!p.req||proj.done[p.req];
+    const running=proj.cur===p.id;
+    if(proj.done[p.id]) cls+=' done';
+    else if(running) cls+=' cur';
+    else if(!reqOk||proj.cur) cls+=' locked';
+    div.className=cls;
+    let right=proj.done[p.id]?t.pj_done:(running?t.pj_doing:'$'+p.cost);
+    let extra='';
+    if(running&&p.id==='menu') extra='<div class="rBar"><div style="width:'+Math.floor((150-proj.menuLeft)/150*100)+'%"></div></div><div style="font-size:11px;color:#8a6d3b;">'+t.pj_menu_p.replace('{0}',proj.menuLeft)+'</div>';
+    if(running&&p.id==='explore') extra='<div class="rBar"><div style="width:'+Math.floor(proj.t/90*100)+'%"></div></div><div style="font-size:11px;color:#8a6d3b;">'+t.pj_exp_p.replace('{0}',Math.floor(proj.t/90*100))+'</div>';
+    div.innerHTML='<div class="ic">'+t[p.nk].slice(0,2)+'</div><div style="flex:1;"><div class="nm">'+t[p.nk].slice(2)+'</div><div class="ds">'+t[p.dk]
+      +(reqOk||proj.done[p.id]?'':' '+t.pj_mys_req)+'</div>'+extra+'</div><div class="ct">'+right+'</div>';
+    if(!proj.done[p.id]&&!running&&reqOk&&!proj.cur){
+      div.addEventListener('click',()=>{
+        if(state.money<p.cost) return;
+        state.money-=p.cost;
+        snd.cash();
+        if(p.type==='instant'){ applyProject(p.id); }
+        else { proj.cur=p.id; proj.t=0; if(p.id==='menu') proj.menuLeft=150; renderHQM(); }
+      });
+    }
+    el.appendChild(div);
+  }
+}
+function openLab(){
+  labOpen=true;
+  renderLab();
+  document.getElementById('lab').style.display='flex';
+}
+function closeLab(){
+  labOpen=false;
+  document.getElementById('lab').style.display='none';
+}
+function renderLab(){
+  document.getElementById('rPts').innerHTML=
+    '🪵 '+rpts.log+'pt &nbsp; 🍗 '+rpts.cooked+'pt &nbsp; 🍢 '+rpts.gfish+'pt';
+  const el=document.getElementById('rList');
+  el.innerHTML='';
+  for(const r of RESEARCH){
+    const div=document.createElement('div');
+    let cls='rNode';
+    const reqOk=!r.req||research.done[r.req];
+    const afford=rpts[r.pt]>=r.cost;
+    if(research.done[r.id]) cls+=' done';
+    else if(!reqOk) cls+=' locked';
+    else if(afford) cls+=' cur';
+    div.className=cls;
+    const right=research.done[r.id]?'✅':(PT_E[r.pt]+r.cost+'pt');
+    div.innerHTML='<div class="ic">'+r.ic+'</div><div><div class="nm">'+LB(r.nm)+'</div><div class="ds">'+LB(r.ds)
+      +(reqOk||research.done[r.id]?'':' ('+T().need+LB(RESEARCH.find(q=>q.id===r.req).nm)+')')+'</div>'
+      +'</div><div class="ct">'+right+'</div>';
+    if(!research.done[r.id]&&reqOk){
+      div.addEventListener('click',()=>{
+        if(rpts[r.pt]<r.cost){ return; }
+        rpts[r.pt]-=r.cost;
+        applyResearch(r.id);
+        renderLab();
+      });
+    }
+    el.appendChild(div);
+  }
+}
+
+/* ================= エフェクト ================= */
+function updateFx(dt){
+  if(cer.t>0) cer.t-=dt;
+  while(groundItems.length>200) groundItems.shift();
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i]; p.t+=dt;
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=500*dt;
+    if(p.t>0.7) particles.splice(i,1);
+  }
+  for(let i=floaters.length-1;i>=0;i--){
+    const f=floaters[i]; f.t+=dt; f.y-=40*dt;
+    if(f.t>1.0) floaters.splice(i,1);
+  }
+  for(let i=bills.length-1;i>=0;i--){
+    const b=bills[i]; b.t+=dt*2.8;
+    if(b.t>=1){ bills.splice(i,1); continue; }
+    if(!b.toHud){
+      const e=b.t;
+      b.x=b.sx+(b.tx-b.sx)*e;
+      b.y=b.sy+(b.ty-b.sy)*e-Math.sin(e*Math.PI)*48;
+    }
+  }
+  for(let i=confetti.length-1;i>=0;i--){
+    const c=confetti[i]; c.t+=dt;
+    c.x+=c.vx*dt; c.y+=c.vy*dt; c.vy+=420*dt;
+    if(c.t>1.4) confetti.splice(i,1);
+  }
+  // 舞い散る葉(環境演出)
+  if(Math.random()<dt*1.2&&leaves.length<14){
+    leaves.push({x:Math.random()*W,y:-10,vx:20+Math.random()*30,vy:30+Math.random()*20,ph:Math.random()*6,t:0});
+  }
+  for(let i=leaves.length-1;i>=0;i--){
+    const l=leaves[i]; l.t+=dt;
+    l.x+=l.vx*dt+Math.sin(state.time*2+l.ph)*30*dt;
+    l.y+=l.vy*dt;
+    if(l.y>H+20||l.x>W+20) leaves.splice(i,1);
+  }
+}
+
+/* ================= ヒント ================= */
+function nextGoal(){
+  // 最序盤: 売る前は操作ループ(切る→売る)を順に教える
+  if(!state.soldOnce){
+    if(player.inv.log<3){
+      let tn=null,td=1e9;
+      for(const n of nodes){
+        if(n.dead||n.hp<=0||n.kind!=='tree') continue;
+        const d=dist(player,n); if(d<td){td=d;tn=n;}
+      }
+      if(tn) return {x:tn.x,y:tn.y,kind:'chop'};
+    } else {
+      return {x:counters[0].x,y:counters[0].y,kind:'sell'};
+    }
+  } else if(!state.everCollected){
+    for(const c of counters){ if(c.pile>=5) return {x:c.pileX,y:c.pileY,kind:'cash'}; }
+  }
+  // 今すぐ買えるパッド(全フェーズ共通の最優先)
+  let best=null,bd=1e9;
+  for(const p of pads){
+    if(!padBuyable(p)||state.money<p.cost) continue;
+    const d=dist(player,p); if(d<bd){bd=d;best={x:p.x,y:p.y,kind:'buy'};}
+  }
+  if(best) return best;
+  // 森(樵関連)を一通り解放するまでは基本操作も案内。
+  // 森制覇後は買えるパッド以外を出さない(川での自走を邪魔しないため)。
+  if(state.forestDone) return null;
+  for(const c of counters){
+    if(c.pile>=15) return {x:c.pileX,y:c.pileY,kind:'cash'};
+  }
+  if(player.inv.raw>0&&state.unlocked.grill) return {x:processors[0].x,y:processors[0].y,kind:'deliver'};
+  let near=null,nd=1e9;
+  for(const p of pads){
+    if(!padBuyable(p)) continue;
+    const need=p.cost-state.money;
+    if(need<=0||need>200) continue;
+    const d=dist(player,p); if(d<nd){nd=d;near={x:p.x,y:p.y,kind:'soon'};}
+  }
+  return near;
+}
+function drawGoalArrow(){
+  if(!state.started||state.cleared) return;
+  const g=nextGoal();
+  if(!g) return;
+  const dx=g.x-player.x, dy=g.y-player.y;
+  const d=Math.hypot(dx,dy);
+  if(d<70) return; // 目の前なら出さない
+  const ang=Math.atan2(dy,dx);
+  // プレイヤーの周囲を回るリング上に矢印を置く
+  const rad=52;
+  const ax=player.x+Math.cos(ang)*rad, ay=player.y+Math.sin(ang)*rad-30;
+  const col=g.kind==='cash'?'#7CFC00':(g.kind==='chop'?'#9be15d':(g.kind==='sell'?'#ffb86b':(g.kind==='deliver'?'#bfe8ff':'#ffd54a')));
+  ctx.save();
+  ctx.translate(ax,ay);
+  ctx.rotate(ang);
+  const bob=Math.sin(state.time*6)*4;
+  ctx.translate(bob,0);
+  ctx.fillStyle=col;
+  ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(20,0); ctx.lineTo(2,-13); ctx.lineTo(2,-6);
+  ctx.lineTo(-16,-6); ctx.lineTo(-16,6); ctx.lineTo(2,6); ctx.lineTo(2,13);
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  // 画面外なら距離ラベル
+  const onScreen=(g.x>cam.x&&g.x<cam.x+vw/Z&&g.y>cam.y&&g.y<cam.y+vh/Z);
+  if(!onScreen){
+    ctx.save();
+    ctx.translate(ax,ay-22);
+    ctx.fillStyle='rgba(30,50,30,.8)';
+    const lab=Math.round(d/40)+'m';
+    ctx.font='700 12px system-ui'; ctx.textAlign='center';
+    const w=ctx.measureText(lab).width+14;
+    roundRect(-w/2,-12,w,18,9); ctx.fill();
+    ctx.fillStyle=col;
+    ctx.fillText(lab,0,2);
+    ctx.restore();
+  }
+}
+function currentHint(){
+  const t=T();
+  if(!state.soldOnce&&state.money<=15&&player.inv.log<3) return t.h_chop;
+  if(!state.soldOnce&&player.inv.log>=3) return t.h_sell;
+  if(!state.unlocked.clerk1&&counters[0].stock>0&&dist(player,counters[0])>=110) return t.h_clerkneed;
+  for(const c of counters){ if(c.pile>=12) return t.h_pile; }
+  if(player.inv.raw>0&&!state.unlocked.grill) return t.h_raw;
+  if(state.unlocked.exp_river&&player.inv.fish>0&&dist(player,processors[1])>220) return t.h_fish+priceOf('gfish');
+  if(state.unlocked.area1&&!state.unlocked.exp_river&&state.money>=2000) return t.h_river;
+  if(state.riverDone&&!state.hqBuilt&&state.money>=3000) return t.h_hq;
+  const next=pads.find(p=>padBuyable(p)&&state.money>=p.cost);
+  if(next) return t.h_unlock.replace('{0}',LB(next.label));
+  if(bears.some(b=>b.boss)) return t.h_boss;
+  if(bears.length>=6) return t.h_bears;
+  return '';
+}
+
+/* ================= 描画 ================= */
+const cam={x:0,y:0};
+// ===== カメラコントローラ =====
+// 通常はプレイヤー追従(Z_BASE)。camPanTo/camOverviewでスクリプト的にパン/ズームし、camFollowで追従復帰。
+// 演出時間はゲーム速度(TSCALE)に依存させないため、生dt(raw)でupdateCamを駆動する。
+const camC={x:0,y:0,z:Z_BASE,init:false};   // 現在の中心とズーム(描画に使う実値)
+let camMode='follow';                         // 'follow' | 'override'
+let camTween=null;                            // {fx,fy,fz,tx,ty,tz,t,dur,onDone,toFollow}
+function camEase(t){ return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2; } // ease-in-out
+// 中心(cx,cy)・ズームzoomへdur秒でパン。完了でonDone()。
+function camPanTo(cx,cy,zoom,dur,onDone){
+  camMode='override';
+  camTween={fx:camC.x,fy:camC.y,fz:camC.z,tx:cx,ty:cy,tz:zoom,t:0,dur:Math.max(0.0001,dur||1),onDone:onDone||null,toFollow:false};
+}
+// ワールド全体が収まるズームへ引く汎用リビール。padFrac=表示率(0.9で9割)。
+// fit(画面に収まる倍率)とZ_BASE*0.55(最低引き量)の小さい方を採用。
+// → 小画面ではfitが効いて全体が収まり、大画面でも必ず45%以上引く(横長窓で引かない問題の回避)。
+function camOverview(dur,onDone,padFrac){
+  const pf=padFrac||0.9;
+  const fit=Math.min(vw/Math.max(1,W),vh/Math.max(1,H))*pf;
+  const z=Math.min(fit,Z_BASE*0.55);
+  camPanTo(W/2,H/2,z,dur,onDone);
+}
+// プレイヤー追従へ復帰(dur秒でパンしてから追従再開)。
+function camFollow(dur,onDone){
+  camMode='override';
+  camTween={fx:camC.x,fy:camC.y,fz:camC.z,tx:player.x,ty:player.y,tz:Z_BASE,t:0,dur:Math.max(0.0001,dur||1),onDone:onDone||null,toFollow:true};
+}
+function camIsBusy(){ return !!camTween; }     // パン中か(ウォークスルーの待ち判定用)
+function camReset(){ camMode='follow'; camTween=null; camC.init=false; } // 再スタート時に呼ぶ
+// 矩形領域(x1,y1)-(x2,y2)が画面に収まるようパン+ズーム。padFrac=余白(0.85で領域が画面の85%)。
+function camRevealRegion(x1,y1,x2,y2,dur,onDone,padFrac){
+  const pf=padFrac||0.85;
+  const rw=Math.max(1,x2-x1),rh=Math.max(1,y2-y1);
+  const z=Math.min(vw/rw,vh/rh)*pf;
+  camPanTo((x1+x2)/2,(y1+y2)/2,z,dur,onDone);
+}
+// 川マップ全容のリビールショット: 寄せて約2秒見せてからプレイヤーへ復帰。
+function camRevealRiver(){
+  camRevealRegion(1330,150,1880,890,1.4,()=>setTimeout(()=>camFollow(1.2),2000));
+}
+function updateCam(rdt){
+  if(!camC.init){ camC.x=player.x; camC.y=player.y; camC.z=Z_BASE; camC.init=true; }
+  if(camTween){
+    const w=camTween;
+    if(w.toFollow){ w.tx=player.x; w.ty=player.y; } // 復帰中も動くプレイヤーを追う
+    w.t+=rdt;
+    let k=w.t/w.dur; if(k>1)k=1;
+    const e=camEase(k);
+    camC.x=w.fx+(w.tx-w.fx)*e;
+    camC.y=w.fy+(w.ty-w.fy)*e;
+    camC.z=w.fz+(w.tz-w.fz)*e;
+    if(k>=1){
+      const done=w.onDone, tf=w.toFollow;
+      camTween=null;
+      if(tf) camMode='follow';
+      if(done) done();
+    }
+  } else if(camMode==='follow'){
+    camC.x=player.x; camC.y=player.y; camC.z=Z_BASE;
+  }
+  // override かつ tween無し → camCを保持(静止)
+  Z=camC.z;
+  const vwz=vw/Z,vhz=vh/Z;
+  if(camMode==='override'){
+    // スクリプト演出中はクランプしない(現ワールド外=未開拓領域も見せられる)
+    cam.x=camC.x-vwz/2;
+    cam.y=camC.y-vhz/2;
+  } else {
+    cam.x=clamp(camC.x-vwz/2,0,Math.max(0,W-vwz));
+    cam.y=clamp(camC.y-vhz/2,0,Math.max(0,H-vhz));
+    if(W<vwz)cam.x=(W-vwz)/2;
+    if(H<vhz)cam.y=(H-vhz)/2;
+  }
+}
+function draw(){
+  ctx.fillStyle='#4f8a3f';
+  ctx.fillRect(0,0,vw,vh);
+  ctx.save();
+  ctx.scale(Z,Z);
+  ctx.translate(-cam.x,-cam.y);
+
+  // 草地(二段トーン)
+  ctx.fillStyle='#7db35e';
+  ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(110,160,85,.55)';
+  for(let i=0;i<60;i++){
+    const x=(i*247)%W,y=(i*173)%H;
+    ctx.beginPath(); ctx.ellipse(x,y,60,26,0,0,7); ctx.fill();
+  }
+  ctx.fillStyle='rgba(90,140,70,.5)';
+  for(let i=0;i<120;i++){ ctx.fillRect((i*173)%W,(i*391)%H,14,5); }
+
+  const R=state.territoryR;
+  // 自陣の土(柔らかい縁)
+  ctx.fillStyle='#d4ab72';
+  ctx.beginPath(); ctx.ellipse(CX,CY,R+40,R,0,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(120,90,50,.25)'; ctx.lineWidth=6;
+  ctx.beginPath(); ctx.ellipse(CX,CY,R+40,R,0,0,7); ctx.stroke();
+  ctx.fillStyle='rgba(0,0,0,.05)';
+  for(let i=0;i<22;i++){
+    const a=i*2.4,r=(i*53)%R;
+    ctx.beginPath(); ctx.ellipse(CX+Math.cos(a)*r,CY+Math.sin(a)*r*0.9,16,6,0,0,7); ctx.fill();
+  }
+
+  // 中央の客道
+  drawRoadV(ROAD_X,CY-R+60);
+
+  // 川エリア
+  if(riverShown()){
+    ctx.fillStyle='#dec38e';
+    ctx.fillRect(RIVER_X-70,0,80,H);
+    const wg=ctx.createLinearGradient(RIVER_X,0,W,0);
+    wg.addColorStop(0,'#6fb4e0'); wg.addColorStop(1,'#4a90c2');
+    ctx.fillStyle=wg;
+    ctx.fillRect(RIVER_X,0,W-RIVER_X,H);
+    ctx.fillStyle='rgba(255,255,255,.3)';
+    for(let i=0;i<26;i++){
+      const wy=(i*97+Math.sin(state.time*1.5+i)*30+H)%H;
+      ctx.fillRect(RIVER_X+14+(i*53)%(W-RIVER_X-40), wy, 26, 4);
+    }
+    // きらめき
+    for(let i=0;i<8;i++){
+      const sx=RIVER_X+20+(i*61)%(W-RIVER_X-40);
+      const sy=(i*137+state.time*40)%H;
+      const a=0.4+Math.sin(state.time*4+i)*0.3;
+      ctx.fillStyle='rgba(255,255,255,'+Math.max(0,a)+')';
+      ctx.fillRect(sx,sy,5,5);
+    }
+    // 川の客道
+    drawRoadV(ROAD_F,counters[2].y+30);
+    // 水車
+    if(state.unlocked.mill){
+      const a=state.time*1.2;
+      ctx.save();
+      ctx.translate(RIVER_X+40,H-200);
+      ctx.fillStyle='#8a5a32';
+      for(let i=0;i<6;i++){
+        ctx.save(); ctx.rotate(a+i*Math.PI/3);
+        ctx.fillRect(-5,-52,10,52);
+        ctx.restore();
+      }
+      ctx.fillStyle='#6e4626';
+      ctx.beginPath(); ctx.arc(0,0,16,0,7); ctx.fill();
+      ctx.restore();
+    }
+    // 魚スポット(波紋)
+    for(const n of nodes){
+      if(n.kind!=='fish'||n.hp<=0) continue;
+      const r=10+Math.sin(state.time*3+n.ph)*3;
+      ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=2.5;
+      ctx.beginPath(); ctx.ellipse(n.x,n.y,r+8,(r+8)*0.5,0,0,7); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(n.x,n.y,r,r*0.5,0,0,7); ctx.stroke();
+      ctx.font='16px system-ui'; ctx.textAlign='center';
+      ctx.fillText('🐟',n.x,n.y+5);
+    }
+  }
+
+  // 採取場パッチ
+  for(const pt of patches){
+    if(riverShown()===false&&pt.x>1240) continue;
+    const act=!!state.unlocked[pt.key];
+    if(pt.x>1240&&!riverShown()) continue;
+    ctx.fillStyle=act?'#c89d63':'rgba(200,157,99,.55)';
+    ctx.beginPath(); ctx.ellipse(pt.x,pt.y,pt.rx,pt.ry,0,0,7); ctx.fill();
+    if(!act){
+      ctx.strokeStyle='rgba(120,90,50,.7)'; ctx.lineWidth=3; ctx.setLineDash([10,8]);
+      ctx.beginPath(); ctx.ellipse(pt.x,pt.y,pt.rx,pt.ry,0,0,7); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.textAlign='center';
+    ctx.font='700 13px system-ui';
+    ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=3;
+    const label=LB(pt.label)+(act?'':(LANG==='ja'?'(予定地)':' (planned)'));
+    ctx.strokeText(label,pt.x,pt.y-pt.ry-12);
+    ctx.fillStyle='#fffbe8';
+    ctx.fillText(label,pt.x,pt.y-pt.ry-12);
+  }
+
+  // 本社の床(地面レイヤー)
+  if(state.hqBuilt) drawHQFloor();
+
+  // 線路
+  for(const c of carts){
+    if(!state.unlocked[c.key]||c.horse) continue;
+    const p=c.path;
+    for(let i=0;i<p.length-1;i++){
+      const ax=p[i].x,ay=p[i].y,bx=p[i+1].x,by=p[i+1].y;
+      const len=Math.hypot(bx-ax,by-ay),ux=(bx-ax)/len,uy=(by-ay)/len;
+      const nx=-uy,ny=ux;
+      ctx.strokeStyle='#7c5430'; ctx.lineWidth=4;
+      for(let d=8;d<len;d+=16){
+        ctx.beginPath();
+        ctx.moveTo(ax+ux*d+nx*16,ay+uy*d+ny*16);
+        ctx.lineTo(ax+ux*d-nx*16,ay+uy*d-ny*16);
+        ctx.stroke();
+      }
+      ctx.strokeStyle='#9aa2aa'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(ax+nx*9,ay+ny*9); ctx.lineTo(bx+nx*9,by+ny*9); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ax-nx*9,ay-ny*9); ctx.lineTo(bx-nx*9,by-ny*9); ctx.stroke();
+    }
+  }
+
+  // ルート(中央ハブ)
+  drawPath2(CX,CY+60,CX,CY-70,26); drawPath2(CX,CY+60,CX-180,CY+220,26);
+  drawPath2(CX,CY+60,CX+160,CY+60,26); drawPath2(CX+160,CY+60,CX+440,CY+35,22);
+  drawPath2(CX,CY+60,CX,CY+400,22); drawPath2(CX,CY+60,CX-420,CY-10,22);
+
+  for(const p of pads){ if(padVisible(p)) drawPadBase(p); }
+  for(const c of counters){
+    if(!c.unlocked) continue;
+    ctx.fillStyle='rgba(0,0,0,.08)';
+    ctx.beginPath(); ctx.ellipse(c.pileX,c.pileY+8,48,18,0,0,7); ctx.fill();
+  }
+
+  /* --- 深度ソート --- */
+  const drawables=[];
+  for(const n of nodes){
+    if(n.dead||n.kind!=='tree') continue;
+    drawables.push({y:n.y,fn:()=>drawTree(n)});
+  }
+  for(const c of counters){ if(c.unlocked) drawables.push({y:c.y,fn:()=>drawCounter(c)}); }
+  for(const pr of processors){
+    if(!state.unlocked[pr.key]) continue;
+    drawables.push({y:pr.y,fn:()=>drawProcessor(pr)});
+    drawables.push({y:pr.y+30,fn:()=>drawStaticStaff(pr.x+pr.staffX,pr.y+18,pr.fx==='fire'?'#d8954c':'#5fa8d8')});
+  }
+  for(const st of stores){
+    if(!state.unlocked[st.key]||st.amount<=0) continue;
+    drawables.push({y:st.y,fn:()=>drawStore(st)});
+  }
+  for(const c of carts){
+    if(!state.unlocked[c.key]) continue;
+    const pos=cartPos(c);
+    drawables.push({y:pos.y,fn:()=>drawCart(c,pos)});
+  }
+  for(const tu of turrets){ if(tu.active) drawables.push({y:tu.y,fn:()=>drawTurret(tu)}); }
+  if(state.hqBuilt) drawables.push({y:HQ.y-HQ_H/2+60,fn:drawHQ});
+  for(const g of groundItems) drawables.push({y:g.y,fn:()=>drawGroundItem(g)});
+  for(const b of bears) drawables.push({y:b.y,fn:()=>drawBear(b)});
+  for(const w of workers){ if(state.unlocked[w.key]) drawables.push({y:w.y,fn:()=>drawHuman(w,w.color,true)}); }
+  for(const c of counters){ if(c.unlocked&&c.staffed) drawables.push({y:c.y+16,fn:()=>drawStaticStaff(c.x,c.y+24,'#5f8de0')}); }
+  if(collector.active) drawables.push({y:collector.y,fn:drawCollector});
+  for(const cu of customers) drawables.push({y:cu.y,fn:()=>drawCustomer(cu)});
+  drawables.push({y:player.y,fn:()=>drawHuman(player,'#3d9970',false)});
+  for(const c of counters){ if(c.unlocked) drawables.push({y:c.pileY,fn:()=>drawCashPile(c)}); }
+  // 柵
+  if(state.unlocked.area1){
+    const posts=52;
+    for(let i=0;i<posts;i++){
+      const a=i/posts*Math.PI*2;
+      const fx=CX+Math.cos(a)*(R+40),fy=CY+Math.sin(a)*R;
+      if(Math.sin(a)<0&&Math.abs(fx-ROAD_X)<58) continue;
+      drawables.push({y:fy,fn:((x,y)=>()=>drawFencePost(x,y))(fx,fy)});
+    }
+  }
+  for(let fy=36;fy<270;fy+=44){
+    drawables.push({y:fy,fn:((x,y)=>()=>drawFencePost(x,y))(ROAD_X-64,fy)});
+    drawables.push({y:fy,fn:((x,y)=>()=>drawFencePost(x,y))(ROAD_X+64,fy)});
+    if(riverShown()){
+      drawables.push({y:fy,fn:((x,y)=>()=>drawFencePost(x,y))(ROAD_F-64,fy)});
+      drawables.push({y:fy,fn:((x,y)=>()=>drawFencePost(x,y))(ROAD_F+64,fy)});
+    }
+  }
+  // 川未開拓時の境界フェンス(東端の当たり判定を可視化)
+  if(riverShown()&&!state.unlocked.exp_river){
+    for(let fy=24;fy<H;fy+=46){
+      drawables.push({y:fy,fn:((x,y)=>()=>drawFencePost(x,y))(1228,fy)});
+    }
+  }
+  drawables.sort((a,b)=>a.y-b.y);
+  for(const d of drawables) d.fn();
+  // 釣り糸+ウキ
+  if(player.fishTarget){
+    const ft=player.fishTarget;
+    const hx=player.x+(player.x<ft.x?16:-16), hy=player.y-38;
+    ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=1.6;
+    ctx.beginPath();
+    ctx.moveTo(hx,hy);
+    ctx.quadraticCurveTo((hx+ft.x)/2,Math.min(hy,ft.y)-46,ft.x,ft.y-4);
+    ctx.stroke();
+    const bobY=ft.y-4+Math.sin(state.time*5)*2;
+    ctx.fillStyle='#e74c3c';
+    ctx.beginPath(); ctx.arc(ft.x,bobY,5,0,7); ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(ft.x,bobY-3,2.5,0,7); ctx.fill();
+    if((player.fishHit||0)>0){
+      const rr=(0.25-player.fishHit)*120;
+      ctx.strokeStyle='rgba(255,255,255,'+(player.fishHit*3)+')';
+      ctx.lineWidth=3;
+      ctx.beginPath(); ctx.ellipse(ft.x,ft.y,rr,rr*0.5,0,0,7); ctx.stroke();
+    }
+  }
+
+  for(const p of pads){ if(padVisible(p)) drawPadLabel(p); }
+
+  for(const pr of projectiles){
+    ctx.fillStyle='#ffe066';
+    ctx.beginPath(); ctx.arc(pr.x,pr.y,6,0,7); ctx.fill();
+  }
+  for(const p of particles){
+    ctx.globalAlpha=1-p.t/0.7;
+    ctx.fillStyle=p.color;
+    ctx.fillRect(p.x-3,p.y-3,6,6);
+  }
+  ctx.globalAlpha=1;
+  for(const c of confetti){
+    ctx.globalAlpha=1-c.t/1.4;
+    ctx.fillStyle='hsl('+c.hue+',80%,60%)';
+    ctx.fillRect(c.x-4,c.y-2,8,5);
+  }
+  ctx.globalAlpha=1;
+  // 葉
+  for(const l of leaves){
+    ctx.save();
+    ctx.translate(l.x,l.y);
+    ctx.rotate(Math.sin(state.time*3+l.ph)*0.8);
+    ctx.fillStyle='rgba(106,168,79,.75)';
+    ctx.beginPath(); ctx.ellipse(0,0,6,3,0,0,7); ctx.fill();
+    ctx.restore();
+  }
+  drawGoalArrow();
+  for(const b of bills){ if(!b.toHud) drawBill(b.x,b.y); }
+
+  ctx.textAlign='center';
+  for(const f of floaters){
+    ctx.globalAlpha=Math.max(0,1-f.t/1.0);
+    ctx.font='700 21px system-ui';
+    ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=4;
+    ctx.strokeText(f.text,f.x,f.y);
+    ctx.fillStyle=f.color;
+    ctx.fillText(f.text,f.x,f.y);
+  }
+  ctx.globalAlpha=1;
+  ctx.restore();
+
+  // セレモニーバナー
+  if(cer.t>0){
+    const a=Math.min(1,cer.t/0.5)*Math.min(1,(3.2-cer.t)/0.3+0.001);
+    ctx.globalAlpha=Math.max(0,Math.min(1,a));
+    ctx.fillStyle='rgba(20,40,25,.62)';
+    ctx.fillRect(0,vh*0.34,vw,110);
+    ctx.fillStyle='#ffd54a';
+    ctx.fillRect(0,vh*0.34,vw,5);
+    ctx.fillRect(0,vh*0.34+105,vw,5);
+    ctx.textAlign='center';
+    ctx.font='800 30px system-ui';
+    ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.lineWidth=6;
+    ctx.strokeText(cer.text,vw/2,vh*0.34+68);
+    ctx.fillStyle='#fffbe8';
+    ctx.fillText(cer.text,vw/2,vh*0.34+68);
+    ctx.globalAlpha=1;
+  }
+  // ビネット
+  const vg=ctx.createRadialGradient(vw/2,vh/2,Math.min(vw,vh)*0.45,vw/2,vh/2,Math.max(vw,vh)*0.75);
+  vg.addColorStop(0,'rgba(0,0,0,0)');
+  vg.addColorStop(1,'rgba(20,40,20,.22)');
+  ctx.fillStyle=vg;
+  ctx.fillRect(0,0,vw,vh);
+
+  for(const b of bills){
+    if(!b.toHud) continue;
+    const sx=(b.sx-cam.x)*Z,sy=(b.sy-cam.y)*Z;
+    const e=b.t;
+    const x=sx+((vw-90)-sx)*e,y=sy+(40-sy)*e-Math.sin(e*Math.PI)*30;
+    drawBill(x,y);
+  }
+  drawHUD();
+  if(joy.active){
+    ctx.globalAlpha=0.35; ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(joy.ox,joy.oy,44,0,7); ctx.fill();
+    const dx=joy.x-joy.ox,dy=joy.y-joy.oy,d=Math.hypot(dx,dy)||1;
+    ctx.globalAlpha=0.55;
+    ctx.beginPath(); ctx.arc(joy.ox+dx/d*Math.min(d,40),joy.oy+dy/d*Math.min(d,40),22,0,7); ctx.fill();
+    ctx.globalAlpha=1;
+  }
+}
+
+/* --- 描画ヘルパー --- */
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+function drawRoadV(rx,toY){
+  ctx.fillStyle='#cfa86e';
+  ctx.fillRect(rx-52,0,104,toY);
+  ctx.fillStyle='rgba(0,0,0,.06)';
+  for(let y=20;y<toY-10;y+=46){ ctx.beginPath(); ctx.ellipse(rx,y,18,6,0,0,7); ctx.fill(); }
+}
+function drawPath2(ax,ay,bx,by,w){
+  const dx=bx-ax,dy=by-ay,len=Math.hypot(dx,dy)||1,nx=-dy/len*w,ny=dx/len*w;
+  ctx.fillStyle='#cfa86e';
+  ctx.beginPath();
+  ctx.moveTo(ax+nx,ay+ny); ctx.lineTo(bx+nx,by+ny);
+  ctx.lineTo(bx-nx,by-ny); ctx.lineTo(ax-nx,ay-ny);
+  ctx.closePath(); ctx.fill();
+}
+function drawFencePost(x,y){
+  ctx.fillStyle='rgba(0,0,0,.12)';
+  ctx.beginPath(); ctx.ellipse(x,y+3,8,4,0,0,7); ctx.fill();
+  ctx.fillStyle='#a87b4d';
+  ctx.fillRect(x-5,y-30,10,32);
+  ctx.fillStyle='#c79a68';
+  ctx.beginPath(); ctx.moveTo(x-5,y-30); ctx.lineTo(x,y-38); ctx.lineTo(x+5,y-30); ctx.closePath(); ctx.fill();
+}
+function drawPadBase(p){
+  const pw=104,ph=58,r=14;
+  if(!padBuyable(p)){   // 予告(ロック)表示: まだ買えない川ステップ
+    ctx.save();
+    ctx.translate(p.x,p.y);
+    ctx.fillStyle='rgba(225,228,232,.45)';
+    ctx.strokeStyle='rgba(80,80,85,.65)'; ctx.lineWidth=3; ctx.setLineDash([7,5]);
+    roundRect(-pw/2,-ph/2,pw,ph,r); ctx.fill(); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+    return;
+  }
+  const pulse=1+Math.sin(state.time*4)*0.04;
+  const afford=state.money>=(p.cost-p.paid);
+  ctx.save();
+  ctx.translate(p.x,p.y);
+  ctx.scale(pulse,pulse);
+  ctx.fillStyle=afford?'rgba(255,250,210,.95)':'rgba(255,255,255,.82)';
+  ctx.strokeStyle=afford?'#e0a700':'#8a6d3b'; ctx.lineWidth=afford?4:3;
+  roundRect(-pw/2,-ph/2,pw,ph,r); ctx.fill(); ctx.stroke();
+  if(p.paid>0){
+    ctx.save();
+    roundRect(-pw/2,-ph/2,pw,ph,r); ctx.clip();
+    ctx.fillStyle='rgba(120,200,90,.6)';
+    ctx.fillRect(-pw/2,-ph/2,pw*(p.paid/p.cost),ph);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+function drawPadLabel(p){
+  ctx.textAlign='center';
+  if(!padBuyable(p)){   // 予告(ロック)表示: アイコン+ラベル+🔒(価格は出さない)
+    ctx.globalAlpha=0.6;
+    ctx.font='24px system-ui';
+    ctx.fillText(p.icon,p.x,p.y-4);
+    ctx.font='18px system-ui';
+    ctx.fillText('🔒',p.x,p.y+20);
+    ctx.font='600 13px system-ui';
+    ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=4;
+    ctx.strokeText(LB(p.label),p.x,p.y-42);
+    ctx.fillStyle='#eef';
+    ctx.fillText(LB(p.label),p.x,p.y-42);
+    ctx.globalAlpha=1;
+    return;
+  }
+  ctx.font='26px system-ui';
+  ctx.fillText(p.icon,p.x,p.y-2);
+  ctx.font='700 15px system-ui';
+  ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=4;
+  const remain='$'+Math.ceil(p.cost-p.paid);
+  ctx.strokeText(remain,p.x,p.y+20);
+  ctx.fillStyle='#fff';
+  ctx.fillText(remain,p.x,p.y+20);
+  ctx.font='600 13px system-ui';
+  ctx.strokeText(LB(p.label),p.x,p.y-42);
+  ctx.fillStyle='#fffbe8';
+  ctx.fillText(LB(p.label),p.x,p.y-42);
+}
+function drawTree(n){
+  const x=n.x+(n.shake>0?Math.sin(state.time*60)*3.5:0);
+  if(n.hp<=0){
+    ctx.fillStyle='rgba(0,0,0,.12)';
+    ctx.beginPath(); ctx.ellipse(n.x,n.y+6,22,9,0,0,7); ctx.fill();
+    ctx.fillStyle='#9c6b3c';
+    ctx.fillRect(n.x-13,n.y-13,26,19);
+    ctx.fillStyle='#d8b083';
+    ctx.beginPath(); ctx.ellipse(n.x,n.y-13,13,7,0,0,7); ctx.fill();
+    return;
+  }
+  const s=(0.5+n.grow*0.5)*1.18;
+  const plot=n.owner==='plot';
+  ctx.fillStyle='rgba(0,0,0,.13)';
+  ctx.beginPath(); ctx.ellipse(n.x,n.y+8,28*s,11*s,0,0,7); ctx.fill();
+  ctx.fillStyle='#8a5a32';
+  ctx.fillRect(x-9*s,n.y-36*s,18*s,42*s);
+  ctx.fillStyle='rgba(0,0,0,.16)';
+  ctx.beginPath(); ctx.arc(x+2,n.y-60*s,33*s,0,7); ctx.fill();
+  ctx.fillStyle=plot?'#4aa052':'#3f8f3f';
+  ctx.beginPath(); ctx.arc(x,n.y-62*s,32*s,0,7); ctx.fill();
+  ctx.fillStyle=plot?'#63bd6b':'#54a854';
+  ctx.beginPath(); ctx.arc(x-17*s,n.y-46*s,23*s,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(x+18*s,n.y-48*s,22*s,0,7); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.18)';
+  ctx.beginPath(); ctx.arc(x-10*s,n.y-72*s,12*s,0,7); ctx.fill();
+  if(n.hp<n.maxHp){
+    ctx.fillStyle='rgba(0,0,0,.4)';
+    ctx.fillRect(n.x-22,n.y-104,44,6);
+    ctx.fillStyle='#9be15d';
+    ctx.fillRect(n.x-22,n.y-104,44*(n.hp/n.maxHp),6);
+  }
+}
+function drawCounter(c){
+  const x=c.x,y=c.y;
+  ctx.fillStyle='rgba(0,0,0,.13)';
+  ctx.beginPath(); ctx.ellipse(x,y+20,68,16,0,0,7); ctx.fill();
+  ctx.fillStyle='#7c5430';
+  ctx.fillRect(x-52,y-4,11,26);
+  ctx.fillRect(x+41,y-4,11,26);
+  ctx.fillStyle='#a9764a';
+  roundRect(x-62,y-24,124,26,7); ctx.fill();
+  ctx.fillStyle='#c08c5b';
+  roundRect(x-62,y-29,124,11,5); ctx.fill();
+  const shown=Math.min(c.stock,8);
+  for(let i=0;i<shown;i++){
+    const iy=y-36-i*7;
+    if(c.type==='log'){
+      ctx.fillStyle='#9c6b3c';
+      roundRect(x-18,iy-4,36,8,4); ctx.fill();
+      ctx.fillStyle='#d8b083';
+      ctx.beginPath(); ctx.ellipse(x-18,iy,4,4,0,0,7); ctx.fill();
+    } else {
+      ctx.font='17px system-ui'; ctx.textAlign='center';
+      ctx.fillText(MAT[c.type].e,x,iy+4);
+    }
+  }
+  const ex=x+74;
+  ctx.fillStyle='#8a6a44';
+  roundRect(ex-22,y-8,44,14,3); ctx.fill();
+  if(c.stock>8){
+    const h=clamp(Math.ceil((c.stock-8)/6),1,6);
+    for(let i=0;i<h;i++){
+      if(c.type==='log'){
+        ctx.fillStyle='#9c6b3c';
+        roundRect(ex-19,y-18-i*9,38,8,4); ctx.fill();
+      } else {
+        ctx.font='15px system-ui'; ctx.textAlign='center';
+        ctx.fillText(MAT[c.type].e,ex,y-12-i*9);
+      }
+    }
+  }
+  ctx.textAlign='center';
+  ctx.font='800 14px system-ui';
+  ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=4;
+  ctx.strokeText('×'+c.stock,ex,y-66);
+  ctx.fillStyle='#fff';
+  ctx.fillText('×'+c.stock,ex,y-66);
+  ctx.fillStyle=c.type==='log'?'#4caf50':(c.type==='gfish'?'#4a90c2':'#e0762f');
+  roundRect(x-60,y-66,36,30,7); ctx.fill();
+  ctx.font='17px system-ui';
+  ctx.fillText(MAT[c.type].e,x-42,y-43);
+  ctx.font='700 13px system-ui';
+  ctx.fillStyle='#fff';
+  ctx.fillText('$'+priceOf(c.type),x-42,y-70);
+  if(!c.staffed&&dist(player,c)>=110&&c.stock>0){
+    ctx.font='800 15px system-ui';
+    ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=4;
+    ctx.strokeText(T().staff,x,y+44);
+    ctx.fillStyle='#ffdd55';
+    ctx.fillText(T().staff,x,y+44);
+  }
+}
+function drawCashPile(c){
+  const amt=c.pile+(c.visPile||0);
+  if(amt<=0) return;
+  const n=clamp(Math.ceil(amt/8),1,20);
+  for(let i=0;i<n;i++) drawBillFlat(c.pileX+(i%2)*4-2,c.pileY-i*5);
+  ctx.textAlign='center';
+  ctx.font='800 16px system-ui';
+  ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=4;
+  ctx.strokeText('$'+Math.floor(amt),c.pileX,c.pileY-n*5-12);
+  ctx.fillStyle='#aaffaa';
+  ctx.fillText('$'+Math.floor(amt),c.pileX,c.pileY-n*5-12);
+}
+function drawBillFlat(x,y){
+  ctx.fillStyle='#3cb04a';
+  roundRect(x-21,y-7,42,14,3); ctx.fill();
+  ctx.strokeStyle='#2a8536'; ctx.lineWidth=2;
+  roundRect(x-21,y-7,42,14,3); ctx.stroke();
+  ctx.fillStyle='#bdf0c2';
+  ctx.beginPath(); ctx.arc(x,y,4,0,7); ctx.fill();
+}
+function drawBill(x,y){
+  ctx.save(); ctx.translate(x,y); ctx.rotate(Math.sin((x+y)*0.05)*0.4);
+  drawBillFlat(0,0);
+  ctx.restore();
+}
+function drawProcessor(pr){
+  const x=pr.x,y=pr.y;
+  const fire=pr.fx==='fire';
+  ctx.fillStyle='rgba(0,0,0,.13)';
+  ctx.beginPath(); ctx.ellipse(x,y+16,62,15,0,0,7); ctx.fill();
+  ctx.fillStyle=fire?'#6b6b6b':'#7a6248';
+  roundRect(x-50,y-19,100,33,9); ctx.fill();
+  ctx.fillStyle=fire?'#3c3c3c':'#4a3a2a';
+  ctx.beginPath(); ctx.ellipse(x,y-19,50,15,0,0,7); ctx.fill();
+  if(pr.amount>0){
+    const fl=1+Math.sin(state.time*(fire?9:7))*0.2;
+    if(fire){
+      ctx.fillStyle='#ff9b3d';
+      ctx.beginPath(); ctx.ellipse(x,y-28,15*fl,10*fl,0,0,7); ctx.fill();
+      ctx.fillStyle='#ffd76b';
+      ctx.beginPath(); ctx.ellipse(x,y-30,8*fl,5*fl,0,0,7); ctx.fill();
+    } else {
+      ctx.fillStyle='rgba(200,210,220,.7)';
+      ctx.beginPath(); ctx.ellipse(x,y-34-Math.sin(state.time*2)*4,12*fl,8*fl,0,0,7); ctx.fill();
+    }
+  }
+  const out=Sfind(pr.outId);
+  ctx.textAlign='center';
+  ctx.font='700 14px system-ui';
+  ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=3;
+  const t=MAT[pr.inType].e+pr.amount+' → '+MAT[out.type].e+out.amount;
+  ctx.strokeText(t,x,y-50);
+  ctx.fillStyle='#fff';
+  ctx.fillText(t,x,y-50);
+}
+function drawStore(st){
+  const x=st.x,y=st.y;
+  ctx.fillStyle='#8a6a44';
+  roundRect(x-27,y-6,54,14,3); ctx.fill();
+  const n=Math.min(Math.ceil(st.amount/4),8);
+  for(let i=0;i<n;i++){
+    if(st.type==='log'){
+      ctx.fillStyle='#9c6b3c';
+      roundRect(x-21,y-16-i*9,42,8,4); ctx.fill();
+    } else {
+      ctx.font='15px system-ui'; ctx.textAlign='center';
+      ctx.fillText(MAT[st.type].e,x-10+(i%2)*20,y-14-Math.floor(i/2)*10);
+    }
+  }
+  ctx.textAlign='center';
+  ctx.font='800 14px system-ui';
+  ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=4;
+  const label=st.cap===Infinity?('×'+st.amount):('×'+st.amount+' / '+st.cap);
+  ctx.strokeText(label,x,y-16-n*9-8);
+  ctx.fillStyle=(st.cap!==Infinity&&st.amount>=st.cap)?'#ffb3a0':'#fff';
+  ctx.fillText(label,x,y-16-n*9-8);
+}
+function drawCart(c,pos){
+  const x=pos.x,y=pos.y;
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath(); ctx.ellipse(x,y+8,c.horse?34:26,8,0,0,7); ctx.fill();
+  if(c.horse){
+    // 馬
+    const hx=x+(c.dir>0?-34:34);
+    ctx.save();
+    ctx.translate(hx,y-6);
+    ctx.scale(c.dir>0?-1:1,1);
+    ctx.fillStyle='#8d6e4e';
+    ctx.beginPath(); ctx.ellipse(0,-8,20,12,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(16,-18,8,0,7); ctx.fill();
+    ctx.fillStyle='#6e4626';
+    ctx.fillRect(-12,0,5,10); ctx.fillRect(6,0,5,10);
+    ctx.restore();
+  }
+  ctx.fillStyle='#5a4632';
+  roundRect(x-22,y-22,44,26,5); ctx.fill();
+  ctx.fillStyle='#7a6248';
+  roundRect(x-22,y-22,44,8,4); ctx.fill();
+  ctx.fillStyle='#333';
+  ctx.beginPath(); ctx.arc(x-13,y+5,6,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(x+13,y+5,6,0,7); ctx.fill();
+  if(c.kind==='money'&&c.load>0){
+    for(let i=0;i<Math.min(Math.ceil(c.load/30),5);i++) drawBillFlat(x,y-26-i*6);
+  } else {
+    const dispT=c.dstType||Sfind(c.srcId).type;
+    for(let i=0;i<Math.min(c.load,4);i++){
+      if(dispT==='log'){
+        ctx.fillStyle='#9c6b3c';
+        roundRect(x-17,y-28-i*8,34,7,3); ctx.fill();
+      } else {
+        ctx.font='15px system-ui'; ctx.textAlign='center';
+        ctx.fillText(MAT[dispT].e,x-9+(i%2)*18,y-26-Math.floor(i/2)*12);
+      }
+    }
+  }
+}
+function drawTurret(tu){
+  const x=tu.x,y=tu.y;
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath(); ctx.ellipse(x,y+6,26,10,0,0,7); ctx.fill();
+  ctx.fillStyle='#8d8d8d';
+  roundRect(x-16,y-34,32,38,6); ctx.fill();
+  ctx.fillStyle='#6e6e6e';
+  ctx.beginPath(); ctx.arc(x,y-40,16,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(x,y-44);
+  ctx.rotate(tu.angle);
+  ctx.fillStyle='#444';
+  roundRect(0,-5,30,10,4); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='#ffe066';
+  ctx.beginPath(); ctx.arc(x,y-40,5,0,7); ctx.fill();
+}
+function drawLab(){
+  const x=LAB.x,y=LAB.y;
+  ctx.fillStyle='rgba(0,0,0,.14)';
+  ctx.beginPath(); ctx.ellipse(x,y+16,52,14,0,0,7); ctx.fill();
+  ctx.fillStyle='#cfd8dc';
+  roundRect(x-40,y-44,80,58,10); ctx.fill();
+  ctx.fillStyle='#90a4ae';
+  roundRect(x-40,y-44,80,14,8); ctx.fill();
+  ctx.font='28px system-ui'; ctx.textAlign='center';
+  ctx.fillText('🔬',x,y-6);
+  ctx.font='700 13px system-ui';
+  ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=3;
+  ctx.strokeText(T().lab_label,x,y-66);
+  ctx.fillStyle='#fffbe8';
+  ctx.fillText(T().lab_label,x,y-66);
+}
+/* 本社=開放型オフィスエリア(床と奥壁だけ。手前と天井は無し) */
+const HQ_W=520, HQ_H=380;
+function drawHQFloor(){
+  const x=HQ.x,y=HQ.y,w=HQ_W,h=HQ_H;
+  // 近代的なタイル床
+  ctx.fillStyle='#d8dce2';
+  roundRect(x-w/2,y-h/2,w,h,18); ctx.fill();
+  ctx.strokeStyle='#c2c8d0'; ctx.lineWidth=2;
+  for(let gx=x-w/2+40;gx<x+w/2;gx+=40){
+    ctx.beginPath(); ctx.moveTo(gx,y-h/2+8); ctx.lineTo(gx,y+h/2-8); ctx.stroke();
+  }
+  for(let gy=y-h/2+40;gy<y+h/2;gy+=40){
+    ctx.beginPath(); ctx.moveTo(x-w/2+8,gy); ctx.lineTo(x+w/2-8,gy); ctx.stroke();
+  }
+  // エントランスマット(キャンプ側=下辺)
+  ctx.fillStyle='#5f8de0';
+  roundRect(x-70,y+h/2-16,140,24,8); ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.font='700 13px system-ui'; ctx.textAlign='center';
+  ctx.fillText('WELCOME',x,y+h/2+1);
+}
+function drawHQ(){
+  const x=HQ.x,y=HQ.y,w=HQ_W,h=HQ_H;
+  const ty=y-h/2;
+  // 奥壁(上辺のみ。左右と手前は開放)
+  ctx.fillStyle='#8e9aab';
+  roundRect(x-w/2,ty-34,w,42,8); ctx.fill();
+  ctx.fillStyle='#aab6c6';
+  roundRect(x-w/2,ty-34,w,12,6); ctx.fill();
+  // 奥壁の窓
+  ctx.fillStyle='#cfe3f5';
+  for(let i=0;i<6;i++){ roundRect(x-w/2+34+i*80,ty-26,44,22,4); ctx.fill(); }
+  // ロゴサイン
+  ctx.font='800 18px system-ui'; ctx.textAlign='center';
+  ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=4;
+  ctx.strokeText('🏢 '+T().hq_label,x,ty-44);
+  ctx.fillStyle='#fffbe8';
+  ctx.fillText('🏢 '+T().hq_label,x,ty-44);
+  // ロードマップボード(奥壁に掛かる)
+  const bx=x+w/2-110,by=ty+58;
+  ctx.fillStyle='#f5ead0';
+  roundRect(bx-86,by-44,180,96,8); ctx.fill();
+  ctx.strokeStyle='#8a6a44'; ctx.lineWidth=3;
+  roundRect(bx-86,by-44,180,96,8); ctx.stroke();
+  ctx.fillStyle='#5a3d1e';
+  ctx.textAlign='left';
+  const lines=T().hq_board;
+  for(let i=0;i<lines.length;i++){
+    ctx.font=(i===0?'800 12px':'600 11px')+' system-ui';
+    ctx.fillText(lines[i],bx-76,by-26+i*18);
+  }
+  // 受付カウンター
+  ctx.fillStyle='#a9764a';
+  roundRect(x-90,ty+96,180,26,8); ctx.fill();
+  ctx.fillStyle='#c08c5b';
+  roundRect(x-90,ty+90,180,12,6); ctx.fill();
+  drawStaticStaff(x,ty+86,'#5f8de0');
+  // デスク2島+モニター
+  for(const dx of [-150,90]){
+    ctx.fillStyle='#e8e2d4';
+    roundRect(x+dx,ty+170,120,34,6); ctx.fill();
+    ctx.fillStyle='#444';
+    roundRect(x+dx+18,ty+150,28,20,3); ctx.fill();
+    roundRect(x+dx+72,ty+150,28,20,3); ctx.fill();
+  }
+  // 観葉植物
+  ctx.font='24px system-ui'; ctx.textAlign='center';
+  ctx.fillText('🪴',x-w/2+30,ty+40);
+  ctx.fillText('🪴',x+w/2-30,ty+150);
+}
+function drawGroundItem(g){
+  const bob=Math.sin(state.time*4+g.bob)*3;
+  const glow=0.5+Math.sin(state.time*5+g.bob)*0.25;
+  ctx.strokeStyle='rgba(255,230,100,'+glow+')';
+  ctx.lineWidth=4;
+  ctx.beginPath(); ctx.ellipse(g.x,g.y+3,22,11,0,0,7); ctx.stroke();
+  ctx.fillStyle='rgba(0,0,0,.18)';
+  ctx.beginPath(); ctx.ellipse(g.x,g.y+5,16,7,0,0,7); ctx.fill();
+  ctx.fillStyle='#fffbe8';
+  ctx.strokeStyle='#b08a52'; ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.ellipse(g.x,g.y,17,12,0,0,7); ctx.fill(); ctx.stroke();
+  if(g.type==='log'){
+    ctx.fillStyle='#9c6b3c';
+    roundRect(g.x-14,g.y-8+bob,28,9,4); ctx.fill();
+  } else {
+    ctx.font='22px system-ui';
+    ctx.textAlign='center';
+    ctx.fillText(MAT[g.type].e,g.x,g.y+2+bob);
+  }
+}
+function drawBear(b){
+  ctx.save();
+  ctx.translate(b.x,b.y);
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath(); ctx.ellipse(0,9,37,13,0,0,7); ctx.fill();
+  const flip=(b.dx||1)<0?-1:1;
+  const lungeS=b.lunge>0?1+b.lunge*0.9:1;
+  const base=b.boss?1.8:1.1;
+  ctx.scale(flip*base*lungeS,base*(2-lungeS));
+  const wob=Math.sin(b.walk||0)*2;
+  ctx.fillStyle=b.flash>0?'#ff9a9a':(b.boss?'#5e3a1c':'#7a4f2c');
+  ctx.beginPath(); ctx.ellipse(0,-14+wob*0.3,30,22,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(24,-26+wob*0.3,15,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(17,-38,5,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(30,-38,5,0,7); ctx.fill();
+  ctx.fillStyle=b.flash>0?'#ffc7c7':'#caa275';
+  ctx.beginPath(); ctx.ellipse(33,-23,7,5,0,0,7); ctx.fill();
+  ctx.fillStyle='#222';
+  ctx.beginPath(); ctx.arc(36,-24,2,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(26,-29,2,0,7); ctx.fill();
+  ctx.fillStyle=b.flash>0?'#ff9a9a':(b.boss?'#46290f':'#684325');
+  ctx.fillRect(-22,-2+wob,9,12);
+  ctx.fillRect(10,-2-wob,9,12);
+  ctx.restore();
+  if(b.boss){
+    ctx.font='26px system-ui'; ctx.textAlign='center';
+    ctx.fillText('👑',b.x+38,b.y-92);
+  }
+  if(b.hp<b.maxHp){
+    const bw=b.boss?80:48, by2=b.boss?b.y-104:b.y-62;
+    ctx.fillStyle='rgba(0,0,0,.4)';
+    ctx.fillRect(b.x-bw/2,by2,bw,7);
+    ctx.fillStyle=b.boss?'#ffae42':'#ff6961';
+    ctx.fillRect(b.x-bw/2,by2,bw*(b.hp/b.maxHp),7);
+  }
+}
+function drawCustomer(cu){
+  ctx.save();
+  ctx.translate(cu.x,cu.y);
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath(); ctx.ellipse(0,4,15,6,0,0,7); ctx.fill();
+  const flip=(cu.dx||0)<0?-1:1;
+  const wob=Math.sin(cu.walk||0)*3;
+  ctx.scale(flip*0.95,0.95);
+  ctx.fillStyle='#4a3a2a';
+  ctx.fillRect(-8,-11+wob*0.6,6,12);
+  ctx.fillRect(2,-11-wob*0.6,6,12);
+  ctx.fillStyle='hsl('+cu.hue+',45%,55%)';
+  roundRect(-11,-34,22,25,8); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.lineWidth=2;
+  roundRect(-11,-34,22,25,8); ctx.stroke();
+  ctx.fillStyle='#f4c89a';
+  ctx.beginPath(); ctx.arc(0,-43,10,0,7); ctx.fill();
+  ctx.fillStyle='hsl('+((cu.hue+40)%360)+',35%,35%)';
+  ctx.beginPath(); ctx.arc(0,-46,10,Math.PI,0); ctx.fill();
+  ctx.fillStyle='#222';
+  ctx.beginPath(); ctx.arc(4,-43,1.6,0,7); ctx.fill();
+  ctx.restore();
+  for(let i=0;i<Math.min(cu.carry,4);i++){
+    ctx.font='15px system-ui'; ctx.textAlign='center';
+    ctx.fillText(MAT[cu.counter.type].e,cu.x,cu.y-58-i*12);
+  }
+  if(cu.state==='queue'&&cu.counter.queue[0]===cu&&cu.counter.stock===0){
+    ctx.font='800 18px system-ui';
+    ctx.textAlign='center';
+    ctx.fillStyle='#ffdd55';
+    ctx.fillText('!',cu.x,cu.y-60+Math.sin(state.time*6)*3);
+  }
+}
+function drawStaticStaff(x,y,color){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath(); ctx.ellipse(0,4,15,6,0,0,7); ctx.fill();
+  ctx.fillStyle='#4a3a2a';
+  ctx.fillRect(-8,-11,6,12);
+  ctx.fillRect(2,-11,6,12);
+  ctx.fillStyle=color;
+  roundRect(-11,-34,22,25,8); ctx.fill();
+  ctx.fillStyle='#f4c89a';
+  ctx.beginPath(); ctx.arc(0,-43,10,0,7); ctx.fill();
+  ctx.fillStyle='#c9b458';
+  ctx.beginPath(); ctx.arc(0,-46,10,Math.PI,0); ctx.fill();
+  ctx.fillRect(-12,-46,24,3);
+  ctx.fillStyle='#222';
+  ctx.beginPath(); ctx.arc(4,-43,1.6,0,7); ctx.fill();
+  ctx.restore();
+}
+function drawCollector(){
+  const co=collector;
+  drawStaticStaff(co.x,co.y,'#8d5fe0');
+  for(let i=0;i<Math.min(co.inv,4);i++){
+    ctx.font='15px system-ui'; ctx.textAlign='center';
+    ctx.fillText('🍖',co.x,co.y-56-i*12);
+  }
+}
+function drawCarry(h){
+  const present=TYPES.filter(t=>h.inv[t]>0);
+  if(h===player&&state.money>0){
+    const mcx=h.x-((present.length||1)-1)/2*40-46;
+    const n=clamp(Math.ceil(state.money/25),1,16);
+    for(let i=0;i<n;i++) drawBillFlat(mcx,h.y-60-i*6);
+    ctx.textAlign='center';
+    ctx.font='800 14px system-ui';
+    ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=4;
+    ctx.strokeText('$'+Math.floor(state.money),mcx,h.y-60-n*6-8);
+    ctx.fillStyle='#ffe66b';
+    ctx.fillText('$'+Math.floor(state.money),mcx,h.y-60-n*6-8);
+  }
+  if(!present.length) return;
+  const colW=40;
+  present.forEach((t,ci)=>{
+    const cx=h.x+(ci-(present.length-1)/2)*colW;
+    const n=h.inv[t];
+    const shown=Math.min(n,7);
+    for(let i=0;i<shown;i++){
+      const iy=h.y-66-i*8;
+      if(t==='log'){
+        ctx.fillStyle='#9c6b3c';
+        roundRect(cx-16,iy-4,32,8,4); ctx.fill();
+        ctx.fillStyle='#d8b083';
+        ctx.beginPath(); ctx.ellipse(cx-16,iy,4,4,0,0,7); ctx.fill();
+      } else {
+        ctx.font='16px system-ui'; ctx.textAlign='center';
+        ctx.fillText(MAT[t].e,cx,iy+5);
+      }
+    }
+    if(n>7){
+      ctx.textAlign='center';
+      ctx.font='800 14px system-ui';
+      ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=4;
+      ctx.strokeText('×'+n,cx,h.y-66-7*8-6);
+      ctx.fillStyle='#fff';
+      ctx.fillText('×'+n,cx,h.y-66-7*8-6);
+    }
+  });
+}
+function drawHuman(h,color,isWorker){
+  ctx.save();
+  ctx.translate(h.x,h.y);
+  ctx.fillStyle='rgba(0,0,0,.16)';
+  ctx.beginPath(); ctx.ellipse(0,4,19,8,0,0,7); ctx.fill();
+  const flip=(h.dx||1)<0?-1:1;
+  const wob=Math.sin(h.walk||0)*3;
+  ctx.scale(flip*1.08,1.08);
+  ctx.fillStyle='#4a3a2a';
+  ctx.fillRect(-9,-12+wob*0.6,7,14);
+  ctx.fillRect(2,-12-wob*0.6,7,14);
+  ctx.fillStyle=color;
+  roundRect(-12,-38,24,28,8); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.2)'; ctx.lineWidth=2;
+  roundRect(-12,-38,24,28,8); ctx.stroke();
+  ctx.fillStyle='#f4c89a';
+  ctx.beginPath(); ctx.arc(0,-48,11,0,7); ctx.fill();
+  ctx.fillStyle=isWorker?'#c9b458':'#d35400';
+  ctx.beginPath(); ctx.arc(0,-52,11,Math.PI,0); ctx.fill();
+  ctx.fillRect(-13,-52,26,4);
+  ctx.fillStyle='#222';
+  ctx.beginPath(); ctx.arc(5,-48,1.8,0,7); ctx.fill();
+  const sw=(h.swing||0)>0?-1.4:0.5;
+  ctx.save();
+  ctx.translate(12,-30);
+  ctx.rotate(sw);
+  ctx.fillStyle='#8a5a32';
+  ctx.fillRect(-2,-22,4,24);
+  ctx.fillStyle='#b8c4cc';
+  ctx.beginPath();
+  ctx.moveTo(-2,-22); ctx.lineTo(-12,-18); ctx.lineTo(-2,-12);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.restore();
+  drawCarry(h);
+}
+function drawHUD(){
+  ctx.save();
+  const rows=[
+    { icon:'💰', text:'$ '+Math.floor(state.money), strong:true },
+    { icon:'🪵', text:''+player.inv.log },
+  ];
+  if(player.inv.raw>0||state.unlocked.grill) rows.push({icon:'🍖',text:''+player.inv.raw});
+  if(player.inv.cooked>0||state.unlocked.grill) rows.push({icon:'🍗',text:''+player.inv.cooked});
+  if(player.inv.fish>0||state.unlocked.exp_river) rows.push({icon:'🐟',text:''+player.inv.fish});
+  if(player.inv.gfish>0||state.unlocked.exp_river) rows.push({icon:'🍢',text:''+player.inv.gfish});
+  const pw=148,rh=36,padd=10;
+  const ph=rows.length*rh+padd*2-6;
+  const px=vw-pw-14,py=14;
+  ctx.fillStyle='rgba(30,50,30,.78)';
+  roundRect(px,py,pw,ph,18); ctx.fill();
+  for(let i=0;i<rows.length;i++){
+    const ry=py+padd+i*rh+22;
+    ctx.textAlign='left';
+    ctx.font='20px system-ui';
+    ctx.fillText(rows[i].icon,px+14,ry);
+    ctx.textAlign='right';
+    ctx.font=rows[i].strong?'800 22px system-ui':'700 19px system-ui';
+    ctx.fillStyle=rows[i].strong?'#ffe66b':'#fff';
+    ctx.fillText(rows[i].text,px+pw-16,ry);
+  }
+  if(proj.cur){
+    const t=T();
+    let txt='';
+    if(proj.cur==='menu') txt=t.pj_menu_p.replace('{0}',proj.menuLeft);
+    if(proj.cur==='explore') txt=t.pj_exp_p.replace('{0}',Math.floor(proj.t/90*100));
+    if(txt){
+      ctx.textAlign='left';
+      ctx.font='700 14px system-ui';
+      const tw=ctx.measureText(txt).width+28;
+      ctx.fillStyle='rgba(30,50,30,.78)';
+      roundRect(14,14,tw,36,18); ctx.fill();
+      ctx.fillStyle='#ffd27f';
+      ctx.fillText(txt,28,38);
+    }
+  }
+  const hint=currentHint();
+  if(hint){
+    ctx.textAlign='center';
+    ctx.font='700 16px system-ui';
+    const hw=ctx.measureText(hint).width+44;
+    ctx.fillStyle='rgba(30,50,30,.78)';
+    roundRect(vw/2-hw/2,vh-138,hw,42,21); ctx.fill();
+    ctx.fillStyle='#fffbe8';
+    ctx.fillText(hint,vw/2,vh-111);
+  }
+  ctx.restore();
+}
+
+/* ================= ランキング・クリア ================= */
+function fmtTime(t){
+  const m=Math.floor(t/60), sec=(t%60);
+  return m+"'"+String(Math.floor(sec)).padStart(2,'0')+'"'+String(Math.floor((sec%1)*10));
+}
+function loadBoard(){
+  try{ return JSON.parse(localStorage.getItem('lc_board')||'[]'); }catch(e){ return state._memBoard||[]; }
+}
+function saveBoard(b){
+  if(DEBUG){ state._memBoard=b; return; }
+  try{ localStorage.setItem('lc_board',JSON.stringify(b)); }catch(e){ state._memBoard=b; }
+}
+// ↓ デプロイしたCloudflare WorkerのURLをここに貼る(末尾スラッシュなし)。空ならローカルのみ動作。
+const LEADERBOARD_URL='https://lumber-leaderboard.woops-mirai.workers.dev';
+async function fetchTop(n){
+  if(!LEADERBOARD_URL) return null;
+  try{
+    const r=await fetch(LEADERBOARD_URL+'/top?n='+(n||10),{cache:'no-store'});
+    if(!r.ok) return null;
+    const j=await r.json();
+    return Array.isArray(j)?j:null;
+  }catch(e){ return null; }
+}
+async function postScore(name,time){
+  if(!LEADERBOARD_URL||DEBUG) return null;   // デバッグ中はグローバルへ送らない
+  try{
+    const r=await fetch(LEADERBOARD_URL+'/score',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,time})});
+    if(!r.ok) return null;
+    const j=await r.json();
+    return Array.isArray(j)?j:null;
+  }catch(e){ return null; }
+}
+async function renderBoard(mine){
+  const el=document.getElementById('board');
+  el.innerHTML='<div class="bTitle">- BEST 10 LUMBERJACKS -</div><div style="text-align:center;opacity:.6;">...</div>';
+  let b=await fetchTop(10);
+  const isGlobal=Array.isArray(b);
+  if(!isGlobal) b=loadBoard();   // フォールバック: ローカル記録
+  let html='<div class="bTitle">- BEST 10 LUMBERJACKS -</div>';
+  if(!isGlobal) html+='<div style="font-size:10px;text-align:center;opacity:.55;">(offline)</div>';
+  if(b.length===0) html+='<div style="text-align:center;">NO RECORD</div>';
+  for(let i=0;i<Math.min(b.length,10);i++){
+    const e=b[i]||{};
+    const safeName=String(e.name||'').toUpperCase().replace(/[^A-Z0-9!?\-\._\*]/g,'').slice(0,8)||'??????';
+    const safeTime=Math.max(0,Math.min(Number(e.time)||0,359999));
+    const isMe=mine&&safeName===mine.name&&Math.abs(safeTime-mine.time)<0.05;
+    const cls=isMe?' class="me"':'';
+    html+='<div'+cls+'>'+String(i+1).padStart(2,' ')+'. '+(safeName+'        ').slice(0,8)+'  '+fmtTime(safeTime)+'</div>';
+  }
+  el.innerHTML=html;
+}
+async function submitScore(){
+  const raw=document.getElementById('nameInput').value||'';
+  const name=(raw.toUpperCase().replace(/[^A-Z0-9!?\-\._\*]/g,'')||'AAA').slice(0,8);
+  const ct=state.clearTime||state.time;
+  // ローカルにも常に保存(オフライン/フォールバック用)
+  const lb=loadBoard(); lb.push({name,time:ct}); lb.sort((x,y)=>x.time-y.time); saveBoard(lb.slice(0,10));
+  // グローバル送信(失敗してもローカルは残る)
+  await postScore(name,ct);
+  document.getElementById('nameEntry').style.display='none';
+  await renderBoard({name,time:ct});
+  snd.unlock();
+}
+function checkClear(){
+  if(state.cleared) return;
+  if(!pads.every(p=>state.unlocked[p.id]||(p.id.indexOf('hq_')===0&&state.hqBuilt))) return;
+  state.cleared=true;
+  state.clearTime=state.time;
+  ceremony(T().clear_t);
+  document.getElementById('clearStats').innerHTML=
+    '<div style="font-size:12px;color:#8a6d3b;letter-spacing:3px;font-weight:700;">'+T().c_time+'</div>'+
+    '<div style="font-size:46px;font-weight:800;color:#e0762f;font-family:ui-monospace,Menlo,monospace;line-height:1.15;">'+fmtTime(state.clearTime)+'</div>'+
+    '<div style="margin-top:4px;">'+T().c_total+': <b>$'+Math.floor(state.totalEarned||0)+'</b></div>';
+  renderBoard();
+  document.getElementById('clear').style.display='flex';
+  document.getElementById('reopenClear').style.display='block';
+  snd.unlock();
+}
+
+/* ================= デバッグモード(?debug=1で有効) ================= */
+let DEBUG=(()=>{ try{ return new URLSearchParams(location.search).has('debug'); }catch(e){ return false; } })();
+let TSCALE=1, DBG_QUIET=false, dbgBound=false;
+function enableDebug(){
+  DEBUG=true;
+  document.getElementById('dbgToggle').style.display='block';
+  if(!dbgBound){
+    dbgBound=true;
+    document.getElementById('dbgToggle').addEventListener('click',()=>{
+      const p=document.getElementById('dbgPanel');
+      p.style.display=p.style.display==='none'?'block':'none';
+    });
+    document.querySelectorAll('.dbgBtn').forEach(b=>{
+      b.addEventListener('click',()=>dbgAct(b.dataset.act));
+    });
+  }
+}
+let fpsAcc=0,fpsN=0,fpsVal=0,dbgStatT=0;
+function dbgUnlockSet(ids){
+  DBG_QUIET=true;
+  for(const id of ids){
+    if(state.unlocked[id]) continue;
+    const p=pads.find(q=>q.id===id);
+    if(p) p.paid=p.cost;
+    unlock(id,player.x,player.y);
+  }
+  DBG_QUIET=false;
+}
+function dbgAct(act){
+  if(act==='money1') state.money+=1000;
+  if(act==='money2') state.money+=10000;
+  if(act==='spd1') TSCALE=1;
+  if(act==='spd2') TSCALE=2;
+  if(act==='spd4') TSCALE=4;
+  if(act==='forest') dbgUnlockSet(FOREST_IDS);
+  if(act==='river'){ dbgUnlockSet(FOREST_IDS); state.forestDone=true; dbgUnlockSet(RIVER_IDS); }
+  if(act==='hqn'||act==='hqw'||act==='hqs'){
+    dbgUnlockSet(FOREST_IDS); state.forestDone=true;
+    dbgUnlockSet(RIVER_IDS); state.riverDone=true;
+    if(!state.hqBuilt){
+      const id='hq_'+act.slice(2);
+      const p=pads.find(q=>q.id===id); if(p) p.paid=p.cost;
+      unlock(id,player.x,player.y);   // QUIETを通さず演出付きで建設
+    }
+  }
+  if(act==='rush') spawnRush(10,player.x,player.y);
+  if(act==='boss') bears.push(mkBear(player.x+160,player.y,true));
+  if(act==='clearBears') bears.length=0;
+  if(act==='projDone'&&proj.cur) applyProject(proj.cur);
+  if(act==='clearScreen'){ state.cleared=false; state.unlocked._dbg=true; checkClearForce(); }
+  if(act==='camover'){ camOverview(1.2,()=>setTimeout(()=>camFollow(1.0),1000)); }
+  if(act==='camriver'){ camRevealRiver(); }
+  if(act==='resetTime'){ state.time=0; }
+}
+function checkClearForce(){
+  state.cleared=true;
+  state.clearTime=state.time;
+  ceremony(T().clear_t);
+  document.getElementById('clearStats').innerHTML=
+    '<div style="font-size:12px;color:#8a6d3b;letter-spacing:3px;font-weight:700;">'+T().c_time+'</div>'+
+    '<div style="font-size:46px;font-weight:800;color:#e0762f;font-family:ui-monospace,Menlo,monospace;line-height:1.15;">'+fmtTime(state.clearTime)+'</div>'+
+    '<div style="margin-top:4px;">'+T().c_total+': <b>$'+Math.floor(state.totalEarned||0)+'</b></div>';
+  renderBoard();
+  document.getElementById('clear').style.display='flex';
+  document.getElementById('reopenClear').style.display='block';
+}
+if(DEBUG) enableDebug();
+// 隠し起動: タイトル画面の見出しを3秒以内に5回タップ
+{
+  let taps=0, tapT=0;
+  const h1=document.querySelector('#intro h1');
+  h1.style.cursor='pointer';
+  h1.addEventListener('click',()=>{
+    const now=performance.now();
+    if(now-tapT>3000) taps=0;
+    tapT=now; taps++;
+    if(taps>=5){
+      taps=0;
+      enableDebug();
+      h1.textContent='🐞 デバッグモード ON';
+      setTimeout(()=>{ h1.innerHTML='🪓 きこりキャンプ <span style="font-size:14px;">Lumber Camp</span>'; },900);
+    }
+  });
+}
+
+/* ================= メインループ ================= */
+let last=performance.now();
+function loop(now){
+  const raw=Math.min(0.05,(now-last)/1000);
+  const dt=Math.min(0.15,raw*TSCALE);
+  if(DEBUG){
+    fpsAcc+=raw>0?1/Math.max(raw,0.0001):0; fpsN++;
+    dbgStatT-=raw;
+    if(dbgStatT<=0){
+      fpsVal=Math.round(fpsAcc/Math.max(fpsN,1)); fpsAcc=0; fpsN=0; dbgStatT=0.5;
+      const el=document.getElementById('dbgStats');
+      if(el&&document.getElementById('dbgPanel').style.display!=='none'){
+        el.textContent='FPS '+fpsVal+' | t '+Math.floor(state.time)+'s | x'+TSCALE
+          +'\n🐻'+bears.length+' 🧍'+customers.length+' 🍖'+groundItems.length+' 🌲'+nodes.length
+          +'\nW'+W+' H'+H+' $'+Math.floor(state.money);
+      }
+    }
+  }
+  last=now;
+  if(state.started){
+    state.time+=dt;
+    updatePlayer(dt);
+    updateNodes(dt);
+    updateBears(dt);
+    updateTurrets(dt);
+    updateProcessors(dt);
+    updateWorkers(dt);
+    updateCarts(dt);
+    updateCollector(dt);
+    updateCustomers(dt);
+    updateProjects(dt);
+    updateFx(dt);
+    if(!state.forestDone&&FOREST_IDS.every(id=>state.unlocked[id])){
+      state.forestDone=true;
+      W=W2;               // 川エリアを表示(地形描画幅の拡張)。アクティブ化は購入時のまま。
+      ceremony(T().cer_forest);
+      camRevealRiver();   // カメラがプレイヤーから離れ、東の川マップ全容を見せる
+    }
+    if(!state.riverDone&&RIVER_IDS.every(id=>state.unlocked[id])){
+      state.riverDone=true;
+      ceremony(T().cer_river);
+    }
+    checkClear();
+  }
+  updateCam(raw);
+  draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ================= UI配線 ================= */
+document.getElementById('ctaMail').href=NOTIFY_URL;
+document.getElementById('ctaX').href=X_URL;
+document.getElementById('clearX').addEventListener('click',()=>{
+  document.getElementById('clear').style.display='none';
+});
+document.getElementById('reopenClear').addEventListener('click',()=>{
+  renderBoard();
+  document.getElementById('clear').style.display='flex';
+});
+document.getElementById('nameBtn').addEventListener('click',submitScore);
+const ni=document.getElementById('nameInput');
+ni.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') submitScore(); });
+ni.addEventListener('keyup',e=>e.stopPropagation());
+ni.addEventListener('input',()=>{ ni.value=ni.value.toUpperCase().replace(/[^A-Z0-9!?\-\._\*]/g,'').slice(0,8); });
+document.getElementById('labX').addEventListener('click',closeLab);
+document.getElementById('hqmX').addEventListener('click',closeHQM);
+document.getElementById('tabHQ').addEventListener('click',()=>{ hqmOpen?closeHQM():openHQM(); });
+document.getElementById('tabSettings').addEventListener('click',()=>{ setOpen?closeSettings():openSettings(); });
+document.getElementById('tabLocked').addEventListener('click',()=>{
+  addFloater(player.x,player.y-100,T().lock_toast,'#d9cdaa');
+});
+document.getElementById('setX').addEventListener('click',closeSettings);
+document.getElementById('setJa').addEventListener('click',()=>{ LANG='ja'; applyLang(); renderSettings(); if(hqmOpen)renderHQM(); });
+document.getElementById('setEn').addEventListener('click',()=>{ LANG='en'; applyLang(); renderSettings(); if(hqmOpen)renderHQM(); });
+document.getElementById('setSnd').addEventListener('click',()=>{
+  MUTED=!MUTED;
+  try{ localStorage.setItem('lc_mute',MUTED?'1':'0'); }catch(e){}
+  renderSettings();
+  if(!MUTED) snd.coin();
+});
+document.getElementById('setReset').addEventListener('click',()=>{
+  if(confirm(T().set_reset_confirm)) location.reload();
+});
+document.getElementById('tabResearch').addEventListener('click',()=>{ labOpen?closeLab():openLab(); });
+function startGame(lang){
+  LANG=lang;
+  applyLang();
+  document.getElementById('intro').style.display='none';
+  state.started=true;
+  audio();
+}
+function applyLang(){
+  const t=T();
+  document.getElementById('tabResearch').textContent=t.tab_r;
+  document.getElementById('tabHQ').textContent=t.tab_hq;
+  document.getElementById('tabSettings').textContent=t.tab_set;
+  document.querySelector('#lab h1').textContent=t.lab_t;
+  document.querySelector('#lab .card p').innerHTML=t.lab_d;
+  document.querySelector('#clear h1').textContent=t.clear_t;
+  document.getElementById('ctaMail').textContent=t.cta_mail;
+  document.getElementById('ctaX').textContent=t.cta_x;
+}
+document.getElementById('startBtn').addEventListener('click',()=>startGame('ja'));
+document.getElementById('startBtnEn').addEventListener('click',()=>startGame('en'));
+</script>
+</body>
+</html>
